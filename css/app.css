@@ -1,0 +1,89 @@
+html {
+    height: 100%;
+}
+
+body {
+    min-height: 100%;
+    background-color: rgba(226, 226, 226, 0.23);
+}
+
+#cy {
+    min-height: 520px;
+    min-width: 640px;
+    height: 100%;
+    cursor: pointer;
+    border-top: 1px solid rgba(0, 0, 0, 0.09);
+    border-left: 1px solid rgba(0, 0, 0, 0.09);
+    background-color: rgba(226, 226, 226, 0.8);
+}
+
+#sidebar {
+    min-height: 520px
+}
+
+.pControl {
+    margin: 4px 4px 2px 4px;
+}
+
+.sidebar-right {
+    margin-bottom: 4px;
+    margin-left: 8px;
+    border-top: 1px solid rgba(0, 0, 0, 0.09);
+    border-right: 1px solid rgba(0, 0, 0, 0.09);
+    padding: 8px;
+    background-color: rgba(226, 226, 226, 0.8);
+    border-bottom-left-radius: 10px;
+    border-top-left-radius: 10px;
+}
+
+.sidebar-item {
+    margin-right: 8px;
+    margin-bottom: 4px;
+    border-left: 1px solid rgba(0, 0, 0, 0.09);
+    border-top: 1px solid rgba(0, 0, 0, 0.09);
+    padding-right: 14px;
+    padding-left: 8px;
+    padding-bottom: 4px;
+    background-color: rgba(226, 226, 226, 0.8);
+    border-bottom-right-radius: 10px;
+    border-top-right-radius: 10px;
+}
+
+#slider {
+    margin-bottom: 15px;
+    padding-left: 12px;
+}
+
+#phValueLable {
+    font-size: 25px;
+    text-align: center;
+}
+
+#groupList li {
+    list-style: none;
+}
+
+.group-item {
+    padding-right: 3px;
+    padding-left: 10px;
+    padding-bottom: 3px;
+    border-left: 1px solid rgba(0, 0, 0, 0.09);
+    border-top: 1px solid rgba(0, 0, 0, 0.09);
+    border-bottom-left-radius: 5px;
+    border-top-left-radius: 5px;
+}
+
+.sidebar-item ul {
+    margin-left: 0;
+    padding-left: 0;
+    margin-top: 2px;
+}
+
+.sidebar-item li {
+    list-style: none;
+    display: table-row;
+}
+
+.sidebar-item input {
+    margin-right: 8px;
+}

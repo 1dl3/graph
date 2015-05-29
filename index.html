@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>pH-dependency of non-enzymatic reactions</title>
+    <link rel="stylesheet" href="css/bootstrap.min.css">
+    <link rel="stylesheet" href="css/bootstrap-theme.min.css">
+
+    <link rel="stylesheet" href="css/jquery-ui.min.css">
+    <link rel="stylesheet" href="css/jquery.dataTables.min.css">
+    <link rel="stylesheet" href="css/jquery.dataTables_themeroller.css">
+    <link rel="stylesheet" href="css/jquery.ui.all.min.css">
+    <link rel="stylesheet" href="css/jquery.ui.base.min.css">
+
+    <link rel="stylesheet" href="css/jquery-ui.structure.min.css">
+    <link rel="stylesheet" href="css/font-awesome.min.css">
+
+    <link rel="stylesheet" href="css/vis.min.css">
+    <link rel="stylesheet" href="css/app.css">
+
+
+    <script src="js/jquery.js"></script>
+    <script src="js/hammer.js"></script>
+    <script src="js/vis.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+    <script src="js/jquery-ui.min.js"></script>
+    <script src="js/underscore.js"></script>
+    <script src="js/jquery.dataTables.min.js"></script>
+
+</head>
+
+<body class="container-fluid" style="margin: 8px">
+
+<div class="row">
+    <div class="row col-md-12">
+        <h1>pH-dependency of non-enzymatic reactions</h1>
+    </div>
+
+
+    <div class="row col-md-2 row-fluid">
+        <div class="sidebar-item">
+            <h4>pH-value: <span id="phValueLable">3</span></h4>
+
+            <input type="range" class="pControl" id="phSlider" value="0" step="1" style="margin-right: 18px">
+            <input id="step_left" type="button" value="<<">
+            <input id="step_rigth" type="button" value=">>">
+            <label><input type="checkbox" id="fixLength"/>Fix Length</label>
+
+        </div>
+
+        <div class="sidebar-item">
+            <h4>Animation:</h4>
+
+            <label for=speed_slider>Animation Speed</label>
+            <input type="range" class="pControl" id="speed_slider" value="2000" min="100" max="5000" step="500"
+                   style="margin-right: 18px" name="Speed">
+            <input type="button" id="animatGraph" value="Start"/>
+            <input type="button" id="stopAnimation" value="Stop">
+        </div>
+
+        <div class="sidebar-item">
+            <h4>Dataset:</h4>
+
+            <div class="btn-group">
+                <ul>
+                    <li><label><input name="dataset-group" type="radio" value="FE_data.csv" checked="checked"/>Fe(II)
+                        condition</label>
+                    </li>
+                    <li><label><input name="dataset-group" type="radio" value="AD_data.csv"/>Water</label></li>
+                    <li><label><input name="dataset-group" type="radio" value="Diff_data.csv"/>Differential</label></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar-item">
+            <h4>Scaling:</h4>
+
+            <div class="btn-group" id="scalingEnabled" name="scaling-group">
+                <ul>
+                    <li>
+                        <lable><input name="scaling-group" type="radio" value="reaction"
+                                      checked="checked"/>Reaction
+                        </lable>
+                    </li>
+                    <li><label><input name="scaling-group" type="radio" value="none"/>None</label></li>
+                </ul>
+            </div>
+        </div>
+        <div class="sidebar-item">
+            <h4>Options:</h4>
+
+            <div class="btn-group" name="options-group">
+                <ul>
+                    <li><label><input type="checkbox" value="biochem_path" id="biochem_path_id"/>Display
+                        Biochem.Pathways </label>
+                        <ul>
+                            <li><label id="hide_graph_label" style="display: none"><input type="checkbox"
+                                                                                          value="hide_graph">Hide Graph</label>
+                            </li>
+                        </ul>
+                    </li>
+                    <li><label><input type="checkbox" id="structure_checkbox" value="structures"/>Display
+                        structures</label></li>
+                    <li><label><input type="checkbox" id="convex_hulls_id" value="convex_hulls" checked="checked"/>Displayconvex
+                        hulls</label></li>
+                </ul>
+            </div>
+        </div>
+
+        <div class="sidebar-item">
+            <h4>Connections</h4>
+            <h5 id="el_connnections">Connections:</h5>
+
+            <div id="elements">
+                <ul id="elements_list">
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-7" id="cy">
+    </div>
+
+    <div class="col-md-3">
+        <div class="sidebar-right">
+            <div id="graphTables">
+                <ul>
+                    <li><a href="#graphConnections">Graph Connections</a></li>
+                    <li><a href="#groupConnections">Group Connections</a></li>
+                </ul>
+                <div id="graphConnections">
+                    <table id="data-table">
+                        <thead>
+                        <tr>
+                            <th>Edge</th>
+                            <th>Value</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="groupConnections">
+                    <div id="groupList">
+
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar-right">
+            <h4>Settings:</h4>
+
+            <div id="accordion">
+                <ul>
+                    <li><a href="#graphSettings">Graph Settings</a></li>
+                    <li><a href="#edgeSettings">Edge Settings</a></li>
+                </ul>
+
+                <div id="graphSettings">
+                    <h4>Graph Settings:</h4>
+                    <label for=centralGravity>Center Gravity</label>
+                    <input type="range" id="centralGravity" min="0" max="10" step="0.05">
+
+                    <label for=gravitationalConstant>Gravitational Constant</label>
+                    <input class="pControl" id="gravitationalConstant" value="0" min="-30000" max="0" type="range"
+                           name="center_gravity"/>
+
+                    <label for=springLength>Spring Length</label>
+                    <input class="pControl" id="springLength" type="range" min="0" max="500" step="5"
+                           value="0"/>
+
+                    <label for=springConstant>Spring Constant</label>
+                    <input class="pControl" id="springConstant" type="range" min="0" max="1.2" step="0.005" value="0"/>
+
+                    <label for=damping>Damping</label>
+                    <input type="range" class="pControl" id="damping" min="0" max="1" step="0.01">
+
+                    <label for=avoidOverlap>Avoid Overlap</label>
+                    <input type="range" class="pControl" id="avoidOverlap" min="0" max="150" step="1">
+
+                    <input class="btn btn-md btn-primary" id="stabilize" type="button" value="Stabilize"/>
+                    <input class="btn btn-md btn-primary" id="fixGraph" type="button" value="Lock Graph"/>
+                    <input class="btn btn-md btn-primary" id="reset" type="button" value="Reset"/>
+                </div>
+
+                <div id="edgeSettings">
+                    <h4>Edge Settings:</h4>
+                    <label for=enableSmooth>Enable Smooth</label>
+                    <input type="checkbox" id="enableSmooth" checked="checked">
+                    <br/>
+                    <label for=edgeStyelSelector>Edge Style</label>
+                    <select id="edgeStyelSelector">
+                        <option value="dynamic">dynamic</option>
+                        <option value="continuous">continuous</option>
+                        <option value="discrete">discrete</option>
+                        <option value="diagonalCross">diagonalCross</option>
+                        <option value="straightCross">straightCross</option>
+                        <option value="horizontal">horizontal</option>
+                        <option value="vertical">vertical</option>
+                        <option value="curvedCW">curvedCW</option>
+                        <option value="curvedCCW">curvedCCW</option>
+                    </select>
+                    <br/>
+                    <label for=roundNess>Roundness</label>
+                    <input type="range" id="roundNess" min="0" max="1" step="0.05">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--if you find the tou can fix them :D-->
+<div >
+    <ul>
+        <li>Bugs:</li>
+        <ul>
+            <li>refactoring/perfomance check </li>
+            <li>Farben noch einmal :D</li>
+            <li>Hide Graph uncheck</li>
+            <li>Animations Connections und slider werden nicht geupdated</li>
+            <li>Connections List Rate sort (wuerd laenger dauern)</li>
+        </ul>
+        <li>Improvements:</li>
+        <ul>
+            <li>Remove Todo-List</li>
+            <li><s>Biochem pathways</s></li>
+            <li><s>Color tweaking (esp. fuer ABS)</s></li>
+            <li><s><a href="https://github.com/almende/vis/issues/852">Tooltip Bug (issues/852)</a></s></li>
+            <li><s>Style Groups list</s></li>
+            <li><s>Connections List Buttons</s></li>
+            <li><s>Remove Groups</s></li>
+            <li><s>Image enlarge on hover</s></li>
+            <li><s>Connections updaten</s></li>
+            <li><s>spring lenght mit dicke updaten</s></li>
+            <li><s>differential farben tauschen</s></li>
+            <li><s>Hook up Graph Settings</s></li>
+            <li><s>Mobile (close enough)</s></li>
+            <li><s>Performance Datatables(close enough)</s></li>
+            <li><s>Off By One Bug</s></li>
+            <li><s>Slider Values (fixes datatables alert as well)</s></li>
+            <li><s>Node Selection Connection Undefined(input type range error)</s></li>
+            <li><s>Duplicate Entries Datatables</s></li>
+        </ul>
+    </ul>
+</div>
+</body>
+
+<script src="js/app.js"></script>
+
+</html>

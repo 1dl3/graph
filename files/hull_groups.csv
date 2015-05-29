@@ -1,0 +1,5 @@
+Lower Glycolysis,Pyr,PEP,3PG;
+Central Glycolysis,G3P,DHAP;
+Upper Glycolysis,Glu,F6P,G6P,F16BP;
+Oxidative PPP,6PG;
+Non-oxidative PPP,X5PRu5P,R5P,S7P,E4P;
