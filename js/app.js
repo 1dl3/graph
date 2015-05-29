@@ -320,7 +320,7 @@ $(function () {
                 edge.hidden = false;
                 edge.color = "green";
                 edge.hidden = true;
-                edge.dashes = true;
+                edge.dashes = false;
                 edge.chemScale = true;
                 edge.width = 3;
                 nEdge = networkData.edges.add(edge);
@@ -722,12 +722,14 @@ $(function () {
             $("#animatGraph").attr("value", "Start");
             animating = false;
             i = 0;
+            setConnectionsList(network.getSelection());
         }
 
         function animation() {
             setTimeout(function () {
                 setLableValue(sliderValues[i]);
                 $("#phSlider").attr("value", sliderValues[i]);
+
                 i++;
                 if (i < sliderValues.length && animating) {
                     animation();
