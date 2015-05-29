@@ -184,7 +184,6 @@ $(function () {
                     edge = networkData.edges.get(edge);
                     if (!edge.hidden) {
                         var conNodes = network.getConnectedNodes(edge.id);
-                        console.log(conNodes);
                         var con = conNodes[0] + conNodes[1];
                         try {
                             str += "<li><div class='connContainer'><b>" + conNodes[0] + "->" + conNodes[1] + "<div id='conListValue'  style='display:inline;'>:</b> " + gData[con].values[val] + "</div></div> </div></li>";
