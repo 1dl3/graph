@@ -93,8 +93,9 @@
                     <li><label><input type="checkbox" value="biochem_path" id="biochem_path_id"/>Display
                         Biochem.Pathways </label>
                         <ul>
-                            <li><label id="hide_graph_label" style="display: none"><input type="checkbox"
-                                                                                          value="hide_graph">Hide Graph</label>
+                            <li><label id="hide_graph_label" style="display: none"><input type="checkbox" id="hide_graph_id" value="hide_graph">Hide Graph</label>
+                            </li>
+                            <li><label id="dashed_lines_label" style="display: none"><input type="checkbox" id="dashed_lines_id" value="dashed_lines">Dashed Lines</label>
                             </li>
                         </ul>
                     </li>
@@ -215,15 +216,18 @@
     <ul>
         <li>Bugs:</li>
         <ul>
-            <li>refactoring/perfomance check </li>
-            <li>Farben noch einmal :D</li>
-            <li>Hide Graph uncheck</li>
-            <li>Animations Connections (geht is aber wahnsinnig langsam) und slider werden nicht geupdated</li>
-            <li>Connections List Rate sort (wuerd laenger dauern)</li>
+
         </ul>
         <li>Improvements:</li>
         <ul>
+            <li>refactoring/perfomance check </li>
+            <li>Animations Connections (geht is aber wahnsinnig langsam) und slider werden nicht geupdated</li>
+            <li>Connections List Rate sort (wuerd laenger dauern)</li>
+
             <li>Remove Todo-List</li>
+            <li><s>Improved Reset</s></li>
+            <li><s>Farben noch einmal :D</s></li>
+            <li><s>Hide Graph uncheck</s></li>
             <li><s>Biochem pathways</s></li>
             <li><s>Color tweaking (esp. fuer ABS)</s></li>
             <li><s><a href="https://github.com/almende/vis/issues/852">Tooltip Bug (issues/852)</a></s></li>

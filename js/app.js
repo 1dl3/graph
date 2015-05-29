@@ -48,6 +48,7 @@ $(function () {
                         scaleFactor: 0.3
                     }
                 },
+                width: 5,
                 color: {
                     highlight: "#000"
                 },
@@ -122,6 +123,13 @@ $(function () {
             if (dataTable != null) {
                 dataTable.clear();
             }
+            config = [];
+            $("#hide_graph_id").prop("checked", false);
+            $("#hide_graph_label").hide();
+            $("#dashed_lines_id").prop("checked", false);
+            $("#dashed_lines_label").hide()
+            $("#biochem_path_id").prop("checked", false);
+            $("#structure_checkbox").prop("checked", false);
         }
 
         function initNetwork() {
@@ -235,8 +243,8 @@ $(function () {
                 if (config["absolut_file"]) {
                     entries = entries.splice(1, entries.length);
                 }
-                //"F16BP->Glu"
                 var node = entries[0].split("->");
+                //"F16BP->Glu"
                 node[0] = replaceRu5P(node[0]);
                 node[1] = replaceRu5P(node[1]);
 
@@ -320,7 +328,7 @@ $(function () {
                 edge.hidden = false;
                 edge.color = "green";
                 edge.hidden = true;
-                edge.dashes = false;
+                edge.dashes = config["dashed_lines"];
                 edge.chemScale = true;
                 edge.width = 3;
                 nEdge = networkData.edges.add(edge);
@@ -330,8 +338,12 @@ $(function () {
         }
 
         function replaceRu5P(stringValue) {
-            if (stringValue.indexOf("Ru5P") == 0) {
-                return stringValue.replace("Ru5P", "X5PRu5P");
+            try {
+                if (stringValue.indexOf("Ru5P") == 0) {
+                    return stringValue.replace("Ru5P", "X5PRu5P");
+                }
+            } catch (e) {
+
             }
             return stringValue;
         }
@@ -361,6 +373,10 @@ $(function () {
                     config["structures_tooltips"] = event.currentTarget.checked;
                     updateNodes(value);
                     break;
+                case "dashed_lines":
+                    config["dashed_lines"] = event.currentTarget.checked;
+                    updateEdgesWidth(value);
+                    break;
                 case "hide_graph":
                     config["hide_on_biochem_path"] = event.currentTarget.checked;
                     updateEdgesWidth(value);
@@ -368,13 +384,17 @@ $(function () {
                 case "biochem_path":
                     config["biochem_path"] = event.currentTarget.checked;
                     var hideSel = $("#hide_graph_label");  //hahahahahahaha
+                    var hideSem = $("#dashed_lines_label");
                     hideSel.attr("value", config["biochem_path"]);
                     if (config["biochem_path"]) {
                         hideSel.show();
+                        hideSem.show();
                     } else {
                         config["hide_on_biochem_path"] = false;
                         $("#hide_graph_id").prop("checked", false);
+                        $("#dashed_lines_id").prop("checked", false);
                         hideSel.hide();
+                        hideSem.hide();
                     }
                     updateEdgesWidth(value);
                     break;
@@ -497,7 +517,8 @@ $(function () {
         }
 
         function loadExperimentFile(filename) {
-            filename = filename.toLowerCase();
+            destroy();
+            filename = config["current_file"] = filename.toLowerCase();
             var scaling = $("input:radio[name ='scaling-group']:checked").val();
             if (scaling == "none") {
                 filename = "abs_" + filename;
@@ -512,7 +533,6 @@ $(function () {
                 loadGroups();
                 loadBioChemPath();
 
-                destroy();
                 initNetwork();
                 filename = filename.toLowerCase();
                 config["file_diff"] = filename.indexOf("diff") >= 0;
@@ -522,6 +542,7 @@ $(function () {
                 config["structures"] = document.getElementById("structure_checkbox").checked;
                 config["groups"] = document.getElementById("convex_hulls_id").checked;
                 $("#graphTables").tabs("option", "active", 0);
+
                 gData = processData(data);
                 buildGraph(gData);
                 updateListStyle(config["groups"]);
@@ -571,14 +592,14 @@ $(function () {
             }
 
             if (forValue < 0) {
-                color = "rgba(0, 0, 0," + (( forValue * -1 ) ) + ")";
+                color = "rgba(0, 0, 0," + ((( forValue * -1 ) + 0.1) ) + ")";
             } else if (forValue == 0) {
                 color = "rgba(255, 255, 255,0.8)";
             } else {
                 if (typeof forValue == "undefine") {
                     forValue = 0.1;
                 }
-                color = "rgba(255, 0, 0," + (forValue ) + ")";
+                color = "rgba(255, 0, 0," + ((forValue ) + 0.1) + ")";
             }
             return color;
         }
@@ -665,11 +686,14 @@ $(function () {
                 edge.hidden = true;
             } else {
                 edge.hidden = false;
+
             }
             if (edge.id in biochemPathEdgeIds && chemScaling) {
                 edge.hidden = false;
+                edge.dashes = config["dashed_line"];
                 return edge;
             } else if (edge.id in biochemPathEdgeIds && !chemScaling) {
+                edge.dashes = config["dashed_line"];
                 edge.hidden = true;
                 return edge;
             }
@@ -678,7 +702,7 @@ $(function () {
             edge.width = 3;
 
             if (!fileDiff) {
-                edge.width = (value * edgeWidthScaleFactor) + 1;
+                edge.width = (value * edgeWidthScaleFactor) + 3;
                 if (!fixLength) {
                     edge.length = (Math.pow(Math.abs(value) * edgeLengthScaleFactor, 2) * -1) + 75;
                 }
@@ -689,7 +713,7 @@ $(function () {
                 edge.arrows = {
                     to: {
                         enabled: true,
-                        scaleFactor: 0.3
+                        scaleFactor: 0.2
                     }
                 };
             }
@@ -777,7 +801,10 @@ $(function () {
             network.stabilize();
         });
         $("#reset").on('click', function (event) {
-            network.setOptions(initialOptions);
+            var file = config["current_file"];
+            destroy();
+            loadExperimentFile(file);
+
         });
 
         $("#centralGravity").change(function (e) {
