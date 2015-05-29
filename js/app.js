@@ -1,3 +1,4 @@
+//need refactoring
 $(function () {
         var gData;
         var uniqueGData = [];
