@@ -161,7 +161,6 @@ $(function () {
         }
 
         function sortSelection(data) {
-            //console.log(data);
             //TODO
             return data;
         }
@@ -332,7 +331,6 @@ $(function () {
                 edge.chemScale = true;
                 edge.width = 3;
                 nEdge = networkData.edges.add(edge);
-
                 biochemPathEdgeIds[nEdge] = true;
             }
         }
@@ -690,10 +688,10 @@ $(function () {
             }
             if (edge.id in biochemPathEdgeIds && chemScaling) {
                 edge.hidden = false;
-                edge.dashes = config["dashed_line"];
+                edge.dashes = config["dashed_lines"];
                 return edge;
             } else if (edge.id in biochemPathEdgeIds && !chemScaling) {
-                edge.dashes = config["dashed_line"];
+                edge.dashes = config["dashed_lines"];
                 edge.hidden = true;
                 return edge;
             }
