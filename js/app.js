@@ -16,6 +16,8 @@ $(function () {
         var edgeWidthScaleFactor = 6;
         var edgeLengthScaleFactor = 10;
         var hullGroups = [], biochemPath = [];
+        var biochemPathEdgeIds = [];
+
         var initialOptions = {
             autoResize: true,
             height: "650px",
@@ -286,7 +288,7 @@ $(function () {
                 edge = createElement(fileDiff, fixLength, false, nodes[key].values[0]);
                 edge.from = nodes[key].src;
                 edge.to = nodes[key].dst;
-                networkData.edges.add(edge);
+                var key = networkData.edges.add(edge);
             }
             createChemScaleEdges();
             var uniqueNodes = _.uniq(tmp, function (node) {
@@ -323,8 +325,7 @@ $(function () {
                 edge.width = 3;
                 nEdge = networkData.edges.add(edge);
 
-                delete biochemPath[key];
-                biochemPath[nEdge] = true;
+                biochemPathEdgeIds[nEdge] = true;
             }
         }
 
@@ -340,7 +341,7 @@ $(function () {
             var tmpValue;
             dataTable.clear();
             networkData.edges.forEach(function (data) {
-                if (!biochemPath[data.id]) {
+                if (!biochemPathEdgeIds[data.id]) {
                     var gEdge = gData[data.from + data.to];
                     tmpValue = gEdge.values[0];
                     newRow = [
@@ -447,6 +448,8 @@ $(function () {
         }
 
         function loadBioChemPath() {
+            //quick and dirty to fix issues arising between file loadings since i overwrite the keys in the biochem array to find them faster
+            //biochemPathEdgeIds
             if (typeof biochemPath != "undefined" && biochemPath.length <= 0) {
                 $.ajax({
                     url: 'files/biochem_pathways.csv',
@@ -637,7 +640,7 @@ $(function () {
                     fromTo = data.from + data.to;
                     gEdge = gData[fromTo];
                     try {
-                        if (!biochemPath[data.id]) {
+                        if (!biochemPathEdgeIds[data.id]) {
                             value = gEdge.values[index];
                             var tmp = [dataTable.row(i).data()[0], value];
                             dataTable.row(i).data(tmp);
@@ -657,15 +660,16 @@ $(function () {
         }
 
         function updateElement(edge, fileDiff, fixLength, chemScaling, value) {
+
             if (config["hide_on_biochem_path"]) {
                 edge.hidden = true;
             } else {
                 edge.hidden = false;
             }
-            if (edge.id in biochemPath && chemScaling) {
+            if (edge.id in biochemPathEdgeIds && chemScaling) {
                 edge.hidden = false;
                 return edge;
-            } else if (edge.id in biochemPath && !chemScaling) {
+            } else if (edge.id in biochemPathEdgeIds && !chemScaling) {
                 edge.hidden = true;
                 return edge;
             }
