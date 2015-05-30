@@ -35,7 +35,6 @@ $(function () {
             currentFile: null,
             fileType: null,
             structures_tooltips: true,
-            file_diff: false,
             absolut_file: false,
             structures: false,
             fixLength: false,
@@ -115,7 +114,7 @@ $(function () {
         function setLableValue(sValue) {
             $("#phValueLable").html(sValue);
             updateEdgesWidth(sValue);
-            if (config.file_diff) {
+            if (config.fileType == "diff") {
                 updateNodes(sValue);
             }
         }
@@ -213,19 +212,17 @@ $(function () {
                 return; //nothing selected
             }
             var val = document.getElementById("phSlider").value;
-            var index = sliderValues[val];
-            var edges = network.getConnectedNodes(data.edges);
-
+            var connectedNodes = network.getConnectedNodes(data.edges);
             if (val >= 101) {
                 val = 100;
             }
+            var index = sliderValues[val];
+
             if (data.nodes.length == 0) { //edge selected
-                elementHeading.html("Edge: " + edges[0] + "->" + edges[1]);
-                var selectedEdge = networkData.edges.get(edges[0].id);
-                try {
-                    str = "<li><div class='connContainer'><b>pH <div id='conListIndex' style='display:inline;'>" + index + "</div>  :</b> <div id='conListValue'  style='display:inline;'>" + selectedEdge.rates[val] + "</div></div> </li>";
-                } catch (e) {
-                    //biochem path
+                elementHeading.html("Edge: " + connectedNodes[0] + "->" + connectedNodes[1]);
+                connectedNodes = networkData.edges.get(network.getSelectedEdges())[0];
+                if (!connectedNodes.chemScale) {
+                    str = "<li><div class='connContainer'><b>pH <div id='conListIndex' style='display:inline;'>" + index + "</div>  :</b> <div id='conListValue'  style='display:inline;'>" + connectedNodes.rates[val] + "</div></div> </li>";
                 }
             } else {
                 elementHeading.html("Node: " + data.nodes[0]);
@@ -267,7 +264,7 @@ $(function () {
             var nodes = [];
 
             sliderValues = lines.splice(0, 1).pop().split(" ");
-            if (config.fileType == "abs") {
+            if (config.absolut_file) {
                 sliderValues = sliderValues.splice(1, sliderValues.length);
             }
 
@@ -280,7 +277,7 @@ $(function () {
                 }
 
                 entries = data.split(' ');
-                if (config.fileType == "abs") {
+                if (config.absolut_file) {
                     entries = entries.splice(1, entries.length);
                 }
                 var node = entries[0].split("->");
@@ -308,7 +305,7 @@ $(function () {
 
         function buildGraph(elements) {
             var fixLength = document.getElementById("fixLength").checked;
-            var fileDiff = config.file_diff;
+            var fileDiff = config.fileType == "diff";
 
             var tmp = [];
             var edge, tmpValue;
@@ -380,16 +377,6 @@ $(function () {
 
         function setConfig() {
 
-        }
-
-        function createChemScaleEdges() {
-            var edge;
-            var nEdge;
-
-            for (var key in biochemPath) {
-                edge = createElement(false, true, true, 1);
-                nEdge = networkData.edges.add(edge);
-            }
         }
 
         function replaceRu5P(stringValue) {
@@ -512,11 +499,14 @@ $(function () {
 
         function loadExperiment(biochems, filename) {
             filename = config.currentFile = filename.toLowerCase();
-            var scaling = $("input:radio[name ='scaling-group']:checked").val();
-            if (scaling == "none") {
+            var scaling = document.getElementById("disable_reaction").checked;
+            if (scaling) {
                 filename = "abs_" + filename;
-                config.fileType = "abs";
+                config.absolut_file = true;
+            } else {
+                config.absolut_file = false;
             }
+
             $.get('experiments/' + filename, function (data) {
                 initNetwork();
                 if (filename.indexOf("fe_data") >= 0) {
@@ -557,8 +547,7 @@ $(function () {
 
         function getColor(forValue) {
             var color;
-
-            if (!config.file_diff && forValue > 0) {
+            if (!(config.fileType == "diff") && forValue > 0) {
                 forValue = forValue * -1;//hackedy hack
             }
 
@@ -612,7 +601,7 @@ $(function () {
             var value;
             var fixLength = document.getElementById("fixLength").checked;
             var chemScaling = config.bioPath.biochem_path;
-            var fileDiff = config.file_diff;
+            var fileDiff = config.fileType == "diff";
             if (index >= 0) {
                 networkData.edges.forEach(function (data) {
                     if (!data.chemScale) {
@@ -659,7 +648,7 @@ $(function () {
                 }
             }
 
-            if (config.fileType == "abs") {
+            if (config.absolut_file) {
                 edge.width = (value * edgeWidthScaleFactor) + 5;
                 edge.arrows = {
                     to: {
