@@ -678,16 +678,16 @@ $(function () {
 
         $("#animatGraph").click(function (event) {
             if (!animating) {
-                $("#playButton").addClass("fa fa-pause");
+                $("#playButton").switchClass("fa-play", "fa-pause");
                 animation();
             } else {
-                $("#playButton").addClass("fa fa-play");
+                $("#playButton").switchClass("fa-pause", "fa-play");
             }
             animating = !animating;
         });
 
         function resetAnimation() {
-            $("#playButton").addClass("fa fa-play");
+            $("#playButton").switchClass("fa-pause", "fa-play");
             animating = false;
             i = 0;
             setConnectionsList(network.getSelection());
@@ -697,7 +697,6 @@ $(function () {
             setTimeout(function () {
                 setLableValue(sliderValues[i]);
                 $("#phSlider").attr("value", sliderValues[i]);
-
                 i++;
                 if (i < sliderValues.length && animating) {
                     animation();
