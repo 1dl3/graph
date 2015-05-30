@@ -377,6 +377,7 @@ $(function () {
 
         function setConfig() {
 
+
         }
 
         function replaceRu5P(stringValue) {
