@@ -687,7 +687,7 @@ $(function () {
         });
 
         function resetAnimation() {
-            $("#animatGraph").attr("value", "Start");
+            $("#playButton").addClass("fa fa-play");
             animating = false;
             i = 0;
             setConnectionsList(network.getSelection());
