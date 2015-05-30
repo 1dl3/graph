@@ -1,4 +1,24 @@
-//need refactoring
+//function update(phValue) {
+//    $("#phValueLable").html(sValue);
+//
+//    var selection = network.getSelection();
+//    var fileDiff = config.fileType == "diff";
+//    var fixLength = config.fixLength;
+//    var chemScaling = config.bioPath.biochem_path;
+//    networkData.edges.forEach(function (element) {
+//if (!data.chemScale) {
+//    value = data.rates[index];
+//    var tmp = [dataTable.row(i).data()[0], value];
+//    dataTable.row(i).data(tmp);
+//    i++;
+//} else {
+//    value = 1;
+//}
+//networkData.edges.update(updateElement(data, fileDiff, fixLength, chemScaling, value));
+//
+//});
+//}
+//needs refactoring
 $(function () {
         var dataTable = $('#data-table').DataTable();
         var elementHeading = $("#el_connnections");
@@ -10,13 +30,28 @@ $(function () {
         var network;
         var networkOptions;
         var gPhysics;
-        var config = [];
-        config["structures_tooltips"] = true;
+
+        var config = {
+            currentFile: null,
+            fileType: null,
+            structures_tooltips: true,
+            file_diff: false,
+            absolut_file: false,
+            structures: false,
+            fixLength: false,
+            bioPath: {
+                biochem_path: false,
+                hide_on_biochem_path: false,
+                dashed_lines: false
+            },
+            groups: true
+        };
+
+        var initialConfig = config;
 
         var edgeWidthScaleFactor = 6;
         var edgeLengthScaleFactor = 10;
-        var hullGroups = [], biochemPath = [];
-        var biochemPathEdgeIds = [];
+        var hullGroups = [];
 
         var initialOptions = {
             autoResize: true,
@@ -80,7 +115,7 @@ $(function () {
         function setLableValue(sValue) {
             $("#phValueLable").html(sValue);
             updateEdgesWidth(sValue);
-            if (config["file_diff"]) {
+            if (config.file_diff) {
                 updateNodes(sValue);
             }
         }
@@ -113,6 +148,7 @@ $(function () {
             }
         });
 
+
         function destroy() {
             if (network != null && typeof network != "undefined") {
                 network.destroy();
@@ -121,7 +157,7 @@ $(function () {
             if (dataTable != null) {
                 dataTable.clear();
             }
-            config = [];
+            config = initialConfig;
             $("#hide_graph_id").prop("checked", false);
             $("#hide_graph_label").hide();
             $("#dashed_lines_id").prop("checked", false);
@@ -158,8 +194,15 @@ $(function () {
             network.setOptions(networkOptions);
         }
 
-        function sortSelection(data) {
-            //TODO
+        function sortSelection(val, data) {
+            data.sort(function (a, b) {
+                if (!a.chemScale && !b.chemScale) {
+                    if (a.rates[val] == b.rates[val]) {
+                        return 0;
+                    }
+                    return a.rates[val] > b.rates[val] ? -1 : 1;
+                }
+            });
             return data;
         }
 
@@ -172,7 +215,7 @@ $(function () {
             var val = document.getElementById("phSlider").value;
             var index = sliderValues[val];
             var edges = network.getConnectedNodes(data.edges);
-            var edgeIndex = edges[0] + edges[1];
+
             if (val >= 101) {
                 val = 100;
             }
@@ -186,21 +229,19 @@ $(function () {
                 }
             } else {
                 elementHeading.html("Node: " + data.nodes[0]);
-                data = sortSelection(data);
+                data = networkData.edges.get(data.edges);
+                data = sortSelection(val, data);
 
-                data.edges.forEach(function (edge) {
-                    edge = networkData.edges.get(edge);
-                    if (!edge.hidden) {
-                        var conNodes = network.getConnectedNodes(edge.id);
-
-                        //var con = conNodes[0] + conNodes[1];
+                for (var key in data) {
+                    if (!data[key].hidden) {
+                        var conNodes = network.getConnectedNodes(data[key].id);
                         try {
-                            str += "<li><div class='connContainer'><b>" + conNodes[0] + "->" + conNodes[1] + "<div id='conListValue'  style='display:inline;'>:</b> " + edge.rates[val] + "</div></div> </div></li>";
+                            str += "<li><div class='connContainer'><b>" + conNodes[0] + "->" + conNodes[1] + "<div id='conListValue'  style='display:inline;'>:</b> " + data[key].rates[val] + "</div></div> </div></li>";
                         } catch (e) {
                             //biochem path -> no values
                         }
                     }
-                });
+                }
             }
             elementList.html(str);
         }
@@ -226,7 +267,7 @@ $(function () {
             var nodes = [];
 
             sliderValues = lines.splice(0, 1).pop().split(" ");
-            if (config["absolut_file"]) {
+            if (config.fileType == "abs") {
                 sliderValues = sliderValues.splice(1, sliderValues.length);
             }
 
@@ -239,7 +280,7 @@ $(function () {
                 }
 
                 entries = data.split(' ');
-                if (config["absolut_file"]) {
+                if (config.fileType == "abs") {
                     entries = entries.splice(1, entries.length);
                 }
                 var node = entries[0].split("->");
@@ -253,21 +294,24 @@ $(function () {
                     rates[i] = Math.round10(rates[i], -3);
                 }
 
-                nodes[name] = {
-                    src: node[0],
-                    dst: node[1],
-                    values: rates
-                };
+                nodes.push({
+                    name: name,
+                    data: {
+                        src: node[0],
+                        dst: node[1],
+                        values: rates
+                    }
+                });
             });
             return nodes;
         }
 
-        function buildGraph(nodes) {
+        function buildGraph(elements) {
             var fixLength = document.getElementById("fixLength").checked;
-            var fileDiff = config["file_diff"];
+            var fileDiff = config.file_diff;
 
             var tmp = [];
-            var edge;
+            var edge, tmpValue;
             if (fileDiff) {
                 var options = {
                     edges: {
@@ -282,30 +326,46 @@ $(function () {
                 network.setOptions(options);
             }
 
-            for (var key in nodes) {
+            elements.forEach(function (element) {
+
                 tmp.push({
-                    id: nodes[key].src,
-                    label: nodes[key].src
+                    id: element.data.src,
+                    label: element.data.src
                 });
 
                 tmp.push({
-                    id: nodes[key].dst,
-                    label: nodes[key].dst
+                    id: element.data.dst,
+                    label: element.data.dst
                 });
+                try {
+                    tmpValue = element.data.values[0];
+                } catch (e) {
+                    tmpValue = 1;
+                }
 
-                edge = createElement(fileDiff, fixLength, false, nodes[key].values[0]);
-                edge.from = nodes[key].src;
-                edge.to = nodes[key].dst;
-                edge.rates = nodes[key].values;
-                var key = networkData.edges.add(edge);
-            }
-            createChemScaleEdges();
+                edge = createElement(fileDiff, fixLength, false, tmpValue);
+                edge.from = element.data.src;
+                edge.to = element.data.dst;
+
+                if (element.data.chemScale) {
+                    edge.color = "green";
+                    edge.hidden = true;
+                    edge.dashes = config.bioPath.dashed_lines;
+                    edge.width = 3;
+                    edge.chemScale = true;
+                } else {
+                    edge.chemScale = false;
+                    edge.rates = element.data.values;
+                }
+                networkData.edges.add(edge);
+            });
+
             var uniqueNodes = _.uniq(tmp, function (node) {
                 return node.id;
             });
 
             uniqueNodes.forEach(function (data) {
-                if (config["structures"]) {
+                if (config.structures) {
                     data.shape = "circularImage";
                     data.image = "mol_icons/" + data.id.toLowerCase() + ".png";
                     data.size = 25;
@@ -318,22 +378,17 @@ $(function () {
             network.setData(networkData);
         }
 
+        function setConfig() {
+
+        }
+
         function createChemScaleEdges() {
             var edge;
             var nEdge;
 
             for (var key in biochemPath) {
                 edge = createElement(false, true, true, 1);
-                edge.from = biochemPath[key].src;
-                edge.to = biochemPath[key].dst;
-                edge.hidden = false;
-                edge.color = "green";
-                edge.hidden = true;
-                edge.dashes = config["dashed_lines"];
-                edge.chemScale = true;
-                edge.width = 3;
                 nEdge = networkData.edges.add(edge);
-                biochemPathEdgeIds[nEdge] = true;
             }
         }
 
@@ -353,7 +408,7 @@ $(function () {
             var tmpValue;
             dataTable.clear();
             networkData.edges.forEach(function (data) {
-                if (!biochemPathEdgeIds[data.id]) {
+                if (!data.chemScale) {
                     tmpValue = data.rates[0];
                     newRow = [
                         data.from + "–>" + data.to, ((typeof tmpValue === 'undefined') ? "NaN" : tmpValue)
@@ -363,55 +418,6 @@ $(function () {
             });
             dataTable.draw();
         }
-
-        $(':checkbox').change(function (event) {
-            var value = sliderValues[document.getElementById("phSlider").value];
-            switch (event.currentTarget.value) {
-                case "structure_tooltip_checkbox":
-                    config["structures_tooltips"] = event.currentTarget.checked;
-                    updateNodes(value);
-                    break;
-                case "dashed_lines":
-                    config["dashed_lines"] = event.currentTarget.checked;
-                    updateEdgesWidth(value);
-                    break;
-                case "hide_graph":
-                    config["hide_on_biochem_path"] = event.currentTarget.checked;
-                    updateEdgesWidth(value);
-                    break;
-                case "biochem_path":
-                    config["biochem_path"] = event.currentTarget.checked;
-                    var hideSel = $("#hide_graph_label");  //hahahahahahaha
-                    var hideSem = $("#dashed_lines_label");
-                    hideSel.attr("value", config["biochem_path"]);
-                    if (config["biochem_path"]) {
-                        hideSel.show();
-                        hideSem.show();
-                    } else {
-                        config["hide_on_biochem_path"] = false;
-                        $("#hide_graph_id").prop("checked", false);
-                        $("#dashed_lines_id").prop("checked", false);
-                        hideSel.hide();
-                        hideSem.hide();
-                    }
-                    updateEdgesWidth(value);
-                    break;
-                case "structures":
-                    config["structures"] = event.currentTarget.checked;
-                    updateNodes(value);
-                    break;
-                case "convex_hulls":
-                    config["groups"] = event.currentTarget.checked;
-                    if (config["groups"]) {
-                        $("#graphTables").tabs("option", "active", 1);
-                    } else {
-                        $("#graphTables").tabs("option", "active", 0);
-                    }
-                    updateNodes(value);
-                    updateListStyle(config["groups"]);
-                    break;
-            }
-        });
 
         function updateListStyle(clear) {
             var color = "white";
@@ -424,15 +430,6 @@ $(function () {
             }
         }
 
-        $("input:radio[name ='scaling-group']:radio").change(function (event) {
-            var fileName = $("input:radio[name ='dataset-group']:checked").val();
-            loadExperimentFile(fileName);
-        });
-
-        $("input[name=dataset-group]:radio").change(function (event) {
-            loadExperimentFile(event.currentTarget.value);
-        });
-
         function processBiochemichPath(data) {
             var biochemPath = [];
             var entries = data.split("\n");
@@ -440,18 +437,18 @@ $(function () {
             lines.forEach(function (line) {
                 line = line.split(",")[0].split("->");
                 if (line.length > 1) {
-                    biochemPath[line[0] + line[1]] = {
-                        src: line[0],
-                        dst: line[1],
-                        biochem: true
-                    };
+                    biochemPath.push({
+                        name: line[0] + line[1],
+                        data: {
+                            src: line[0],
+                            dst: line[1],
+                            chemScale: true
+                        }
+                    });
                 }
+                ;
             });
             return biochemPath;
-        }
-
-        function getGroup(nodeId) {
-            return hullGroups[nodeId];
         }
 
         function processHullData(data) {
@@ -466,20 +463,8 @@ $(function () {
             return hullGroups;
         }
 
-        function loadBioChemPath() {
-            //quick and dirty to fix issues arising between file loadings since i overwrite the keys in the biochem array to find them faster
-            //biochemPathEdgeIds
-            var biochemPath;
-            if (typeof biochemPath != "undefined" && biochemPath.length <= 0) {
-                $.ajax({
-                    url: 'files/biochem_pathways.csv',
-                    async: false,
-                    success: function (data) {
-                        biochemPath = processBiochemichPath(data);
-                    }
-                });
-            }
-            return biochemPath;
+        function getGroup(nodeId) {
+            return hullGroups[nodeId];
         }
 
         //holy moly
@@ -504,60 +489,64 @@ $(function () {
             $("#groupList").html(list);
         }
 
-        function loadGroups() {
-            if (typeof hullGroups != "undefined" && hullGroups.length <= 0) {
-                $.ajax({
-                    url: 'files/hull_groups.csv',
-                    async: false,
-                    success: function (data) {
-                        hullGroups = processHullData(data);
-                        createGroupList(hullGroups);
-                    }
-                });
+        function loadGroups(biochems, filename) {
+            $.ajax({
+                url: 'files/hull_groups.csv',
+                success: function (data) {
+                    loadExperiment(biochems, filename);
+                    processHullData(data);
+                    createGroupList(hullGroups);
+                }
+            });
+        }
+
+        function loadBioChemPath(filename) {
+            $.ajax({
+                url: 'files/biochem_pathways.csv',
+                success: function (data) {
+                    var biochems = processBiochemichPath(data);
+                    loadGroups(biochems, filename);
+                }
+            });
+        }
+
+        function loadExperiment(biochems, filename) {
+            filename = config.currentFile = filename.toLowerCase();
+            var scaling = $("input:radio[name ='scaling-group']:checked").val();
+            if (scaling == "none") {
+                filename = "abs_" + filename;
+                config.fileType = "abs";
             }
-            return hullGroups;
+            $.get('experiments/' + filename, function (data) {
+                initNetwork();
+                if (filename.indexOf("fe_data") >= 0) {
+                    config.fileType = "fe_data";
+                }
+                if (filename.indexOf("diff") >= 0) {
+                    config.fileType = "diff";
+                }
+                if (filename.indexOf("ad") >= 0) {
+                    config.fileType = "ad";
+                }
+
+                config.bioPath.biochem_path = document.getElementById("biochem_path_id").checked;
+                config.structures = document.getElementById("structure_checkbox").checked;
+                config.groups = document.getElementById("convex_hulls_id").checked;
+                $("#graphTables").tabs("option", "active", 0);
+                var loadedRates = processData(data);
+                var merged = biochems.concat(loadedRates);
+                buildGraph(merged);
+                updateListStyle(config.groups);
+                createDatatable();
+                //holy inefficiency
+                updateNodes("3");
+                updateListStyle(config.groups);
+            });
         }
 
         function loadExperimentFile(filename) {
             destroy();
-            filename = config["current_file"] = filename.toLowerCase();
-            var scaling = $("input:radio[name ='scaling-group']:checked").val();
-            if (scaling == "none") {
-                filename = "abs_" + filename;
-                config["absolut_file"] = true;
-            } else {
-                config["absolut_file"] = false;
-            }
-
-            $.get('experiments/' + filename, function (data) {
-                //Synchronous XMLHttpRequest on the main thread is deprecated because of its detrimental effects to the end user's experience. For more help, check http://xhr.spec.whatwg.org/.
-                //well duh still those need to be loaded first...
-                loadGroups();
-                var bioChems = loadBioChemPath();
-                initNetwork();
-                filename = filename.toLowerCase();
-                config["file_diff"] = filename.indexOf("diff") >= 0;
-                config["file_ad"] = filename.indexOf("ad");
-                config["file_fe"] = filename.indexOf("fe_data");
-                config["biochem_path"] = document.getElementById("biochem_path_id").checked;
-                config["structures"] = document.getElementById("structure_checkbox").checked;
-                config["groups"] = document.getElementById("convex_hulls_id").checked;
-                $("#graphTables").tabs("option", "active", 0);
-
-                var loadedRates = processData(data);
-                //console.log( bioChems);
-                //console.log(loadedRates);
-                var mergedRates = loadedRates.concat(bioChems);
-                console.log(mergedRates);
-                console.log(loadedRates);
-
-                buildGraph(loadedRates);
-                updateListStyle(config["groups"]);
-                createDatatable();
-                //holy inefficiency
-                updateNodes("3");
-                updateListStyle(config["groups"]);
-            });
+            loadBioChemPath(filename);
         }
 
         initNetwork();
@@ -569,7 +558,7 @@ $(function () {
         function getColor(forValue) {
             var color;
 
-            if (!config["file_diff"] && forValue > 0) {
+            if (!config.file_diff && forValue > 0) {
                 forValue = forValue * -1;//hackedy hack
             }
 
@@ -597,7 +586,7 @@ $(function () {
                         border: getColor(data[index])
                     }
                 };
-                if (config["structures"] && node.id != null) {
+                if (config.structures && node.id != null) {
                     node.shape = "circularImage";
                     node.image = "mol_icons/" + node.id.toLowerCase() + ".png";
                     node.title = "<img src='mol_icons/" + node.id.toLowerCase() + ".png'  style='height:80px;width:50px'>";
@@ -607,7 +596,7 @@ $(function () {
                     node.shape = "ellipse";
                 }
 
-                if (config["groups"] && node.id != null) {
+                if (config.groups && node.id != null) {
                     node.group = getGroup(node.id).replace(" ", "").toLowerCase();
                 } else {
                     delete node.group;
@@ -617,43 +606,24 @@ $(function () {
             });
         }
 
-        //function getObjects(key, val) {
-        //    var objects = [];
-        //    for (var i in gData) {
-        //        if (!gData[i].hasOwnProperty(i)) continue;
-        //        if (typeof gData[i] == 'object') {
-        //            objects = objects.concat(getObjects(gData[i], key, val));
-        //        } else if (i == key && gData[key] == val) {
-        //            objects.push(gData);
-        //        }
-        //    }
-        //    return objects;
-        //}
-
         function updateEdgesWidth(sValue) {
             var index = sliderValues.indexOf(sValue);
             var i = 0;
-            var value, gEdge;
+            var value;
             var fixLength = document.getElementById("fixLength").checked;
-            var chemScaling = config["biochem_path"];
-            var fileDiff = config["file_diff"];
+            var chemScaling = config.bioPath.biochem_path;
+            var fileDiff = config.file_diff;
             if (index >= 0) {
-                var fromTo;
                 networkData.edges.forEach(function (data) {
-                    //fromTo = data.from + data.to;
-                    //gEdge = gData[fromTo];
-                    try {
-                        if (!biochemPathEdgeIds[data.id]) {
-                            value = data.rates[index];
-                            var tmp = [dataTable.row(i).data()[0], value];
-                            dataTable.row(i).data(tmp);
-                        }
-                    } catch (e) {
-                        console.log(e, i);
+                    if (!data.chemScale) {
+                        value = data.rates[index];
+                        var tmp = [dataTable.row(i).data()[0], value];
+                        dataTable.row(i).data(tmp);
+                        i++;
+                    } else {
                         value = 1;
                     }
                     networkData.edges.update(updateElement(data, fileDiff, fixLength, chemScaling, value));
-                    i++;
                 });
             }
         }
@@ -664,22 +634,21 @@ $(function () {
 
         function updateElement(edge, fileDiff, fixLength, chemScaling, value) {
 
-            if (config["hide_on_biochem_path"]) {
+            if (config.bioPath.hide_on_biochem_path) {
                 edge.hidden = true;
             } else {
                 edge.hidden = false;
 
             }
-            if (edge.id in biochemPathEdgeIds && chemScaling) {
+            if (edge.chemScale && chemScaling) {
                 edge.hidden = false;
-                edge.dashes = config["dashed_lines"];
+                edge.dashes = config.bioPath.dashed_lines;
                 return edge;
-            } else if (edge.id in biochemPathEdgeIds && !chemScaling) {
-                edge.dashes = config["dashed_lines"];
+            } else if (edge.chemScale && !chemScaling) {
+                edge.dashes = config.bioPath.dashed_lines;
                 edge.hidden = true;
                 return edge;
             }
-            console.log(edge);
             edge.color = getColor(value);
             edge.width = 3;
 
@@ -690,7 +659,7 @@ $(function () {
                 }
             }
 
-            if (config["absolut_file"]) {
+            if (config.fileType == "abs") {
                 edge.width = (value * edgeWidthScaleFactor) + 5;
                 edge.arrows = {
                     to: {
@@ -778,12 +747,70 @@ $(function () {
             fix = !fix;
         });
 
+        $("input:radio[name ='scaling-group']:radio").change(function (event) {
+            var fileName = $("input:radio[name ='dataset-group']:checked").val();
+            loadExperimentFile(fileName);
+        });
+
+        $("input[name=dataset-group]:radio").change(function (event) {
+            loadExperimentFile(event.currentTarget.value);
+        });
+
+        $(':checkbox').change(function (event) {
+            var value = sliderValues[document.getElementById("phSlider").value];
+            switch (event.currentTarget.value) {
+                case "structure_tooltip_checkbox":
+                    config.structures_tooltips = event.currentTarget.checked;
+                    updateNodes(value);
+                    break;
+                case "dashed_lines":
+                    config.bioPath.dashed_lines = event.currentTarget.checked;
+                    updateEdgesWidth(value);
+                    break;
+                case "hide_graph":
+                    config.bioPath.hide_on_biochem_path = event.currentTarget.checked;
+                    updateEdgesWidth(value);
+                    break;
+                case "biochem_path":
+                    config.bioPath.biochem_path = event.currentTarget.checked;
+                    var hideSel = $("#hide_graph_label");  //hahahahahahaha
+                    var hideSem = $("#dashed_lines_label");
+                    hideSel.attr("value", config.bioPath.biochem_path);
+                    if (config.bioPath.biochem_path) {
+                        hideSel.show();
+                        hideSem.show();
+                    } else {
+                        config.bioPath.hide_on_biochem_path = false;
+                        $("#hide_graph_id").prop("checked", false);
+                        $("#dashed_lines_id").prop("checked", false);
+                        hideSel.hide();
+                        hideSem.hide();
+                    }
+                    updateEdgesWidth(value);
+                    break;
+                case "structures":
+                    config.structures = event.currentTarget.checked;
+                    updateNodes(value);
+                    break;
+                case "convex_hulls":
+                    config.groups = event.currentTarget.checked;
+                    if (config.groups) {
+                        $("#graphTables").tabs("option", "active", 1);
+                    } else {
+                        $("#graphTables").tabs("option", "active", 0);
+                    }
+                    updateNodes(value);
+                    updateListStyle(config.groups);
+                    break;
+            }
+        });
+
 
         $("#stabilize").on('click', function (event) {
             network.stabilize();
         });
         $("#reset").on('click', function (event) {
-            var file = config["current_file"];
+            var file = config.currentFile;
             destroy();
             loadExperimentFile(file);
 
