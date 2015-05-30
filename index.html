@@ -4,6 +4,7 @@
 <head>
     <meta charset="utf-8">
     <title>pH-dependency of non-enzymatic reactions</title>
+    <link href='http://fonts.googleapis.com/css?family=Roboto:400,500,700' rel='stylesheet' type='text/css'>
     <link rel="stylesheet" href="css/bootstrap.min.css">
     <link rel="stylesheet" href="css/bootstrap-theme.min.css">
 
@@ -43,8 +44,9 @@
             <h4>pH-value: <span id="phValueLable">3</span></h4>
 
             <input type="range" class="pControl" id="phSlider" value="0" step="1" style="margin-right: 18px">
-            <input id="step_left" type="button" value="<<">
-            <input id="step_rigth" type="button" value=">>">
+            <a class="btn btn-default" href="#" id="step_left"> <i class="fa fa-arrow-left"></i></a>
+            <a class="btn btn-default" href="#" id="step_rigth"> <i class="fa fa-arrow-right"></i></a>
+
             <label><input type="checkbox" id="fixLength"/>Fix Length</label>
 
         </div>
@@ -55,8 +57,10 @@
             <label for=speed_slider>Animation Speed</label>
             <input type="range" class="pControl" id="speed_slider" value="2000" min="100" max="5000" step="500"
                    style="margin-right: 18px" name="Speed">
-            <input type="button" id="animatGraph" value="Start"/>
-            <input type="button" id="stopAnimation" value="Stop">
+            <a class="btn btn-default" href="#" id="animatGraph" value="Start"> <i class="fa fa-play"
+                                                                                   id="playButton"></i></a>
+            <a class="btn btn-default" href="#" id="stopAnimation" value="Stop"> <i class="fa fa-stop"
+                                                                                    id="stopButton"></i></a>
         </div>
 
         <div class="sidebar-item">
@@ -78,10 +82,12 @@
             <div class="btn-group" id="scalingEnabled" name="scaling-group">
                 <ul>
                     <li>
-                        <label><input name="scaling-group" id="enable_reaction" type="radio" value="reaction" checked="checked"/>Reaction
+                        <label><input name="scaling-group" id="enable_reaction" type="radio" value="reaction"
+                                      checked="checked"/>Reaction
                         </label>
                     </li>
-                    <li><label><input name="scaling-group" id="disable_reaction" type="radio" value="none"/>None</label></li>
+                    <li><label><input name="scaling-group" id="disable_reaction" type="radio" value="none"/>None</label>
+                    </li>
                 </ul>
             </div>
         </div>
@@ -185,9 +191,9 @@
                     <label for=avoidOverlap>Avoid Overlap</label>
                     <input type="range" class="pControl" id="avoidOverlap" min="0" max="150" step="1">
 
-                    <input class="btn btn-md btn-primary" id="stabilize" type="button" value="Stabilize"/>
-                    <input class="btn btn-md btn-primary" id="fixGraph" type="button" value="Lock Graph"/>
-                    <input class="btn btn-md btn-primary" id="reset" type="button" value="Reset"/>
+                    <input class="btn btn-default" id="stabilize" type="button" value="Stabilize"/>
+                    <input class="btn btn-default" id="fixGraph" type="button" value="Lock Graph"/>
+                    <input class="btn btn-default" id="reset" type="button" value="Reset"/>
                 </div>
 
                 <div id="edgeSettings">

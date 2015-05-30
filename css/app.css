@@ -1,5 +1,18 @@
 html {
+    font-family: 'Roboto', sans-serif !important;
     height: 100%;
+}
+
+#accordion {
+    font-family: 'Roboto', sans-serif !important;
+
+}
+#graphTables {
+    font-family: 'Roboto', sans-serif !important;
+
+}
+table.dataTable {
+    font-family: 'Roboto', sans-serif !important;
 }
 
 body {

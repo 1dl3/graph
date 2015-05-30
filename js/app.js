@@ -82,6 +82,9 @@ $(function () {
                         scaleFactor: 0.3
                     }
                 },
+                font: {
+                    face: 'Roboto, sans-serif'
+                },
                 width: 5,
                 color: {
                     highlight: "#000"
@@ -675,10 +678,10 @@ $(function () {
 
         $("#animatGraph").click(function (event) {
             if (!animating) {
-                event.currentTarget.value = "Pause";
+                $("#playButton").addClass("fa fa-pause");
                 animation();
             } else {
-                event.currentTarget.value = "Start";
+                $("#playButton").addClass("fa fa-play");
             }
             animating = !animating;
         });
