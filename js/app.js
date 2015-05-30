@@ -35,7 +35,6 @@ $(function () {
             currentFile: null,
             fileType: null,
             structures_tooltips: true,
-            file_diff: false,
             absolut_file: false,
             structures: false,
             fixLength: false,
@@ -115,7 +114,7 @@ $(function () {
         function setLableValue(sValue) {
             $("#phValueLable").html(sValue);
             updateEdgesWidth(sValue);
-            if (config.file_diff) {
+            if (config.fileType == "diff") {
                 updateNodes(sValue);
             }
         }
@@ -267,7 +266,7 @@ $(function () {
             var nodes = [];
 
             sliderValues = lines.splice(0, 1).pop().split(" ");
-            if (config.fileType == "abs") {
+            if (config.absolut_file) {
                 sliderValues = sliderValues.splice(1, sliderValues.length);
             }
 
@@ -280,7 +279,7 @@ $(function () {
                 }
 
                 entries = data.split(' ');
-                if (config.fileType == "abs") {
+                if (config.absolut_file) {
                     entries = entries.splice(1, entries.length);
                 }
                 var node = entries[0].split("->");
@@ -308,7 +307,7 @@ $(function () {
 
         function buildGraph(elements) {
             var fixLength = document.getElementById("fixLength").checked;
-            var fileDiff = config.file_diff;
+            var fileDiff = config.fileType == "diff";
 
             var tmp = [];
             var edge, tmpValue;
@@ -380,16 +379,6 @@ $(function () {
 
         function setConfig() {
 
-        }
-
-        function createChemScaleEdges() {
-            var edge;
-            var nEdge;
-
-            for (var key in biochemPath) {
-                edge = createElement(false, true, true, 1);
-                nEdge = networkData.edges.add(edge);
-            }
         }
 
         function replaceRu5P(stringValue) {
@@ -512,17 +501,20 @@ $(function () {
 
         function loadExperiment(biochems, filename) {
             filename = config.currentFile = filename.toLowerCase();
-            var scaling = $("input:radio[name ='scaling-group']:checked").val();
-            if (scaling == "none") {
+            var scaling = document.getElementById("disable_reaction").checked;
+            if (scaling) {
                 filename = "abs_" + filename;
-                config.fileType = "abs";
+                config.absolut_file = true;
+            } else {
+                config.absolut_file = false;
             }
+
             $.get('experiments/' + filename, function (data) {
                 initNetwork();
-                if (filename.indexOf("fe_data") >= 0) {
+                if ( filename.indexOf("fe_data") >= 0) {
                     config.fileType = "fe_data";
                 }
-                if (filename.indexOf("diff") >= 0) {
+                if ( filename.indexOf("diff") >= 0) {
                     config.fileType = "diff";
                 }
                 if (filename.indexOf("ad") >= 0) {
@@ -557,8 +549,7 @@ $(function () {
 
         function getColor(forValue) {
             var color;
-
-            if (!config.file_diff && forValue > 0) {
+            if (!(config.fileType == "diff") && forValue > 0) {
                 forValue = forValue * -1;//hackedy hack
             }
 
@@ -612,7 +603,7 @@ $(function () {
             var value;
             var fixLength = document.getElementById("fixLength").checked;
             var chemScaling = config.bioPath.biochem_path;
-            var fileDiff = config.file_diff;
+            var fileDiff = config.fileType == "diff";
             if (index >= 0) {
                 networkData.edges.forEach(function (data) {
                     if (!data.chemScale) {
@@ -659,7 +650,7 @@ $(function () {
                 }
             }
 
-            if (config.fileType == "abs") {
+            if (config.absolut_file) {
                 edge.width = (value * edgeWidthScaleFactor) + 5;
                 edge.arrows = {
                     to: {
