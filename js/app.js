@@ -1,14 +1,14 @@
 //need refactoring
 $(function () {
-        var gData;
-        var uniqueGData = [];
-        var sliderValues = [];
-        var networkData = [];
         var dataTable = $('#data-table').DataTable();
-        var network;
-        var networkOptions;
         var elementHeading = $("#el_connnections");
         var elementList = $("#elements_list");
+
+        var sliderValues = [];
+
+        var networkData = [];
+        var network;
+        var networkOptions;
         var gPhysics;
         var config = [];
         config["structures_tooltips"] = true;
@@ -79,11 +79,9 @@ $(function () {
 
         function setLableValue(sValue) {
             $("#phValueLable").html(sValue);
-            if (typeof gData !== 'undefined') {
-                updateEdgesWidth(sValue);
-                if (config["file_diff"]) {
-                    updateNodes(sValue);
-                }
+            updateEdgesWidth(sValue);
+            if (config["file_diff"]) {
+                updateNodes(sValue);
             }
         }
 
@@ -180,8 +178,9 @@ $(function () {
             }
             if (data.nodes.length == 0) { //edge selected
                 elementHeading.html("Edge: " + edges[0] + "->" + edges[1]);
+                var selectedEdge = networkData.edges.get(edges[0].id);
                 try {
-                    str = "<li><div class='connContainer'><b>pH <div id='conListIndex' style='display:inline;'>" + index + "</div>  :</b> <div id='conListValue'  style='display:inline;'>" + gData[edgeIndex].values[val] + "</div></div> </li>";
+                    str = "<li><div class='connContainer'><b>pH <div id='conListIndex' style='display:inline;'>" + index + "</div>  :</b> <div id='conListValue'  style='display:inline;'>" + selectedEdge.rates[val] + "</div></div> </li>";
                 } catch (e) {
                     //biochem path
                 }
@@ -193,9 +192,10 @@ $(function () {
                     edge = networkData.edges.get(edge);
                     if (!edge.hidden) {
                         var conNodes = network.getConnectedNodes(edge.id);
-                        var con = conNodes[0] + conNodes[1];
+
+                        //var con = conNodes[0] + conNodes[1];
                         try {
-                            str += "<li><div class='connContainer'><b>" + conNodes[0] + "->" + conNodes[1] + "<div id='conListValue'  style='display:inline;'>:</b> " + gData[con].values[val] + "</div></div> </div></li>";
+                            str += "<li><div class='connContainer'><b>" + conNodes[0] + "->" + conNodes[1] + "<div id='conListValue'  style='display:inline;'>:</b> " + edge.rates[val] + "</div></div> </div></li>";
                         } catch (e) {
                             //biochem path -> no values
                         }
@@ -258,7 +258,6 @@ $(function () {
                     dst: node[1],
                     values: rates
                 };
-                uniqueGData[node[0]] = nodes[name];
             });
             return nodes;
         }
@@ -282,11 +281,13 @@ $(function () {
                 };
                 network.setOptions(options);
             }
+
             for (var key in nodes) {
                 tmp.push({
                     id: nodes[key].src,
                     label: nodes[key].src
                 });
+
                 tmp.push({
                     id: nodes[key].dst,
                     label: nodes[key].dst
@@ -295,6 +296,7 @@ $(function () {
                 edge = createElement(fileDiff, fixLength, false, nodes[key].values[0]);
                 edge.from = nodes[key].src;
                 edge.to = nodes[key].dst;
+                edge.rates = nodes[key].values;
                 var key = networkData.edges.add(edge);
             }
             createChemScaleEdges();
@@ -352,11 +354,9 @@ $(function () {
             dataTable.clear();
             networkData.edges.forEach(function (data) {
                 if (!biochemPathEdgeIds[data.id]) {
-                    var gEdge = gData[data.from + data.to];
-                    tmpValue = gEdge.values[0];
+                    tmpValue = data.rates[0];
                     newRow = [
-                        data.from + "–>" + data.to,
-                        ((typeof tmpValue === 'undefined') ? "NaN" : tmpValue)
+                        data.from + "–>" + data.to, ((typeof tmpValue === 'undefined') ? "NaN" : tmpValue)
                     ];
                     dataTable.row.add(newRow);
                 }
@@ -434,7 +434,7 @@ $(function () {
         });
 
         function processBiochemichPath(data) {
-            biochemPath = {};
+            var biochemPath = [];
             var entries = data.split("\n");
             var lines = entries.splice(1, entries.length);
             lines.forEach(function (line) {
@@ -442,7 +442,8 @@ $(function () {
                 if (line.length > 1) {
                     biochemPath[line[0] + line[1]] = {
                         src: line[0],
-                        dst: line[1]
+                        dst: line[1],
+                        biochem: true
                     };
                 }
             });
@@ -468,6 +469,7 @@ $(function () {
         function loadBioChemPath() {
             //quick and dirty to fix issues arising between file loadings since i overwrite the keys in the biochem array to find them faster
             //biochemPathEdgeIds
+            var biochemPath;
             if (typeof biochemPath != "undefined" && biochemPath.length <= 0) {
                 $.ajax({
                     url: 'files/biochem_pathways.csv',
@@ -477,6 +479,7 @@ $(function () {
                     }
                 });
             }
+            return biochemPath;
         }
 
         //holy moly
@@ -512,6 +515,7 @@ $(function () {
                     }
                 });
             }
+            return hullGroups;
         }
 
         function loadExperimentFile(filename) {
@@ -529,8 +533,7 @@ $(function () {
                 //Synchronous XMLHttpRequest on the main thread is deprecated because of its detrimental effects to the end user's experience. For more help, check http://xhr.spec.whatwg.org/.
                 //well duh still those need to be loaded first...
                 loadGroups();
-                loadBioChemPath();
-
+                var bioChems = loadBioChemPath();
                 initNetwork();
                 filename = filename.toLowerCase();
                 config["file_diff"] = filename.indexOf("diff") >= 0;
@@ -541,39 +544,20 @@ $(function () {
                 config["groups"] = document.getElementById("convex_hulls_id").checked;
                 $("#graphTables").tabs("option", "active", 0);
 
-                gData = processData(data);
-                buildGraph(gData);
+                var loadedRates = processData(data);
+                //console.log( bioChems);
+                //console.log(loadedRates);
+                var mergedRates = loadedRates.concat(bioChems);
+                console.log(mergedRates);
+                console.log(loadedRates);
+
+                buildGraph(loadedRates);
                 updateListStyle(config["groups"]);
                 createDatatable();
                 //holy inefficiency
                 updateNodes("3");
                 updateListStyle(config["groups"]);
             });
-        }
-
-        function init(data) {
-            //Synchronous XMLHttpRequest on the main thread is deprecated because of its detrimental effects to the end user's experience. For more help, check http://xhr.spec.whatwg.org/.
-            //well duh still those need to be loaded first...
-            loadGroups();
-            loadBioChemPath();
-
-            destroy();
-            initNetwork();
-            filename = filename.toLowerCase();
-            config["file_diff"] = filename.indexOf("diff") >= 0;
-            config["file_ad"] = filename.indexOf("ad");
-            config["file_fe"] = filename.indexOf("fe_data");
-            config["biochem_path"] = document.getElementById("biochem_path_id").checked;
-            config["structures"] = document.getElementById("structure_checkbox").checked;
-            config["groups"] = document.getElementById("convex_hulls_id").checked;
-            $("#graphTables").tabs("option", "active", 0);
-            gData = processData(data);
-            buildGraph(gData);
-            updateListStyle(config["groups"]);
-            createDatatable();
-            //holy inefficiency
-            updateNodes("3");
-            updateListStyle(config["groups"]);
         }
 
         initNetwork();
@@ -633,18 +617,18 @@ $(function () {
             });
         }
 
-        function getObjects(key, val) {
-            var objects = [];
-            for (var i in gData) {
-                if (!gData[i].hasOwnProperty(i)) continue;
-                if (typeof gData[i] == 'object') {
-                    objects = objects.concat(getObjects(gData[i], key, val));
-                } else if (i == key && gData[key] == val) {
-                    objects.push(gData);
-                }
-            }
-            return objects;
-        }
+        //function getObjects(key, val) {
+        //    var objects = [];
+        //    for (var i in gData) {
+        //        if (!gData[i].hasOwnProperty(i)) continue;
+        //        if (typeof gData[i] == 'object') {
+        //            objects = objects.concat(getObjects(gData[i], key, val));
+        //        } else if (i == key && gData[key] == val) {
+        //            objects.push(gData);
+        //        }
+        //    }
+        //    return objects;
+        //}
 
         function updateEdgesWidth(sValue) {
             var index = sliderValues.indexOf(sValue);
@@ -656,11 +640,11 @@ $(function () {
             if (index >= 0) {
                 var fromTo;
                 networkData.edges.forEach(function (data) {
-                    fromTo = data.from + data.to;
-                    gEdge = gData[fromTo];
+                    //fromTo = data.from + data.to;
+                    //gEdge = gData[fromTo];
                     try {
                         if (!biochemPathEdgeIds[data.id]) {
-                            value = gEdge.values[index];
+                            value = data.rates[index];
                             var tmp = [dataTable.row(i).data()[0], value];
                             dataTable.row(i).data(tmp);
                         }
@@ -695,7 +679,7 @@ $(function () {
                 edge.hidden = true;
                 return edge;
             }
-
+            console.log(edge);
             edge.color = getColor(value);
             edge.width = 3;
 
