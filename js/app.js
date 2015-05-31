@@ -1,24 +1,3 @@
-//function update(phValue) {
-//    $("#phValueLable").html(sValue);
-//
-//    var selection = network.getSelection();
-//    var fileDiff = config.fileType == "diff";
-//    var fixLength = config.fixLength;
-//    var chemScaling = config.bioPath.biochem_path;
-//    networkData.edges.forEach(function (element) {
-//if (!data.chemScale) {
-//    value = data.rates[index];
-//    var tmp = [dataTable.row(i).data()[0], value];
-//    dataTable.row(i).data(tmp);
-//    i++;
-//} else {
-//    value = 1;
-//}
-//networkData.edges.update(updateElement(data, fileDiff, fixLength, chemScaling, value));
-//
-//});
-//}
-//needs refactoring
 $(function () {
         var dataTable = $('#data-table').DataTable();
         var elementHeading = $("#el_connnections");
@@ -34,7 +13,6 @@ $(function () {
         var config = {
             currentFile: null,
             fileType: null,
-            structures_tooltips: true,
             absolut_file: false,
             structures: false,
             fixLength: false,
@@ -43,10 +21,20 @@ $(function () {
                 hide_on_biochem_path: false,
                 dashed_lines: false
             },
-            groups: true
+            groups: true,
+            reset: function () {
+                this.structures = false;
+                this.fixLength = false;
+                this.bioPath = {
+                    biochem_path: false,
+                    hide_on_biochem_path: false,
+                    dashed_lines: false
+                };
+
+                this.groups = true;
+            }
         };
 
-        var initialConfig = config;
 
         var edgeWidthScaleFactor = 6;
         var edgeLengthScaleFactor = 10;
@@ -72,7 +60,9 @@ $(function () {
                 },
                 barnesHut: {
                     centralGravity: 1,
-                    gravitationalConstant: -25714
+                    gravitationalConstant: -25714,
+                    springConstant: 0.01,
+                    springLength: 200
                 }
             },
             edges: {
@@ -114,9 +104,9 @@ $(function () {
             return (this.length === 0 || !this.trim());
         };
 
-        function setLableValue(sValue) {
+        function updateUI(sValue) {
             $("#phValueLable").html(sValue);
-            updateEdgesWidth(sValue);
+            updateEdges(sValue);
             if (config.fileType == "diff") {
                 updateNodes(sValue);
             }
@@ -125,7 +115,7 @@ $(function () {
         $("#step_left").click(function () {
             var val = parseInt(document.getElementById("phSlider").value) - 1;
             document.getElementById("phSlider").value = val;
-            setLableValue(sliderValues[val]);
+            updateUI(sliderValues[val]);
             setConnectionsList(network.getSelection());
 
         });
@@ -133,14 +123,14 @@ $(function () {
         $("#step_rigth").click(function () {
             var val = parseInt(document.getElementById("phSlider").value) + 1;
             document.getElementById("phSlider").value = val;
-            setLableValue(sliderValues[val]);
+            updateUI(sliderValues[val]);
             setConnectionsList(network.getSelection());
         });
 
         $("#phSlider").on("input change", function (data) {
             var index = data.currentTarget.value;
             if (index >= 0 && index <= 100) {
-                setLableValue(sliderValues[index]);
+                updateUI(sliderValues[index]);
                 try {
                     var selection = network.getSelection();
                     setConnectionsList(selection);
@@ -159,13 +149,8 @@ $(function () {
             if (dataTable != null) {
                 dataTable.clear();
             }
-            config = initialConfig;
-            $("#hide_graph_id").prop("checked", false);
-            $("#hide_graph_label").hide();
-            $("#dashed_lines_id").prop("checked", false);
-            $("#dashed_lines_label").hide()
-            $("#biochem_path_id").prop("checked", false);
-            $("#structure_checkbox").prop("checked", false);
+            config.reset();
+            setConfig();
         }
 
         function initNetwork() {
@@ -176,24 +161,6 @@ $(function () {
             };
             network = new vis.Network(container, networkData, initialOptions);
             attachNetworkListeners();
-        }
-
-        function fixGraph() {
-            if (fix) {
-                networkOptions.physics = gPhysics;
-            } else {
-                networkOptions.physics = {
-                    barnesHut: {
-                        gravitationalConstant: 0,
-                        centralGravity: 0,
-                        springConstant: 0
-                    },
-                    stabilization: {
-                        enabled: false
-                    }
-                };
-            }
-            network.setOptions(networkOptions);
         }
 
         function sortSelection(val, data) {
@@ -256,7 +223,6 @@ $(function () {
             var selected = dataTable.row('.selected');
             var edges = selected.data()[0].toString().split("–>");
             network.selectNodes(edges, true);
-            var conNodes = network.getConnectedNodes(edges[0]);
             setConnectionsList(network.getSelection());
         });
 
@@ -353,6 +319,11 @@ $(function () {
                     edge.dashes = config.bioPath.dashed_lines;
                     edge.width = 3;
                     edge.chemScale = true;
+                    edge.arrows = {
+                        to: {
+                            enabled: false
+                        }
+                    };
                 } else {
                     edge.chemScale = false;
                     edge.rates = element.data.values;
@@ -369,7 +340,7 @@ $(function () {
                     data.shape = "circularImage";
                     data.image = "mol_icons/" + data.id.toLowerCase() + ".png";
                     data.size = 25;
-                    data.title = "<img src='mol_icons/" + data.id.toLowerCase() + ".png'  style='height:80px;width:50px'>";
+                    data.title = "<img src='mol_icons/" + data.id.toLowerCase() + ".png'  style='height:123px;width:100px'>";
                 }
                 networkData.nodes.add(data);
             });
@@ -378,10 +349,6 @@ $(function () {
             network.setData(networkData);
         }
 
-        function setConfig() {
-
-
-        }
 
         function replaceRu5P(stringValue) {
             try {
@@ -538,6 +505,29 @@ $(function () {
             });
         }
 
+        function readConfig() {
+            config = {
+                structures: document.getElementById("structure_checkbox").checked,
+                fixLength: document.getElementById("fixLength").checked,
+                bioPath: {
+                    biochem_path: document.getElementById("biochem_path_id").checked,
+                    hide_on_biochem_path: false,
+                    dashed_lines: false
+                },
+                groups: document.getElementById("convex_hulls_id").checked
+            };
+        }
+
+        function setConfig() {
+            document.getElementById("convex_hulls_id").checked = config.groups;
+            document.getElementById("structure_checkbox").checked = config.structures;
+            document.getElementById("fixLength").checked = config.fixLength;
+            document.getElementById("biochem_path_id").checked = config.bioPath.biochem_path;
+            document.getElementById("hide_graph_id").checked = config.bioPath.biochem_path;
+            document.getElementById("dashed_lines_id").checked = config.bioPath.biochem_path;
+            $("#bioChemAddOptions").hide();
+        }
+
         function loadExperimentFile(filename) {
             destroy();
             loadBioChemPath(filename);
@@ -582,7 +572,7 @@ $(function () {
                 if (config.structures && node.id != null) {
                     node.shape = "circularImage";
                     node.image = "mol_icons/" + node.id.toLowerCase() + ".png";
-                    node.title = "<img src='mol_icons/" + node.id.toLowerCase() + ".png'  style='height:80px;width:50px'>";
+                    node.title = "<img src='mol_icons/" + node.id.toLowerCase() + ".png'  style='height:100px;width:100px'>";
                     node.size = 30;
                 } else {
                     node.size = 35;
@@ -599,7 +589,7 @@ $(function () {
             });
         }
 
-        function updateEdgesWidth(sValue) {
+        function updateEdges(sValue) {
             var index = sliderValues.indexOf(sValue);
             var i = 0;
             var value;
@@ -626,13 +616,7 @@ $(function () {
         }
 
         function updateElement(edge, fileDiff, fixLength, chemScaling, value) {
-
-            if (config.bioPath.hide_on_biochem_path) {
-                edge.hidden = true;
-            } else {
-                edge.hidden = false;
-
-            }
+            edge.hidden = !!config.bioPath.hide_on_biochem_path; //okay
             if (edge.chemScale && chemScaling) {
                 edge.hidden = false;
                 edge.dashes = config.bioPath.dashed_lines;
@@ -642,6 +626,7 @@ $(function () {
                 edge.hidden = true;
                 return edge;
             }
+
             edge.color = getColor(value);
             edge.width = 3;
 
@@ -695,7 +680,7 @@ $(function () {
 
         function animation() {
             setTimeout(function () {
-                setLableValue(sliderValues[i]);
+                updateUI(sliderValues[i]);
                 $("#phSlider").attr("value", sliderValues[i]);
                 i++;
                 if (i < sliderValues.length && animating) {
@@ -728,14 +713,13 @@ $(function () {
                             barnesHut: {
                                 centralGravity: 1,
                                 gravitationalConstant: -25714,
-                                springConstant: 0.04,
-                                springLength: 95
+                                springConstant: 0.01,
+                                springLength: 150
                             }
                         }
                     }
                 );
             }
-
             fix = !fix;
         });
 
@@ -751,34 +735,28 @@ $(function () {
         $(':checkbox').change(function (event) {
             var value = sliderValues[document.getElementById("phSlider").value];
             switch (event.currentTarget.value) {
-                case "structure_tooltip_checkbox":
-                    config.structures_tooltips = event.currentTarget.checked;
-                    updateNodes(value);
-                    break;
                 case "dashed_lines":
                     config.bioPath.dashed_lines = event.currentTarget.checked;
-                    updateEdgesWidth(value);
+                    updateEdges(value);
                     break;
                 case "hide_graph":
                     config.bioPath.hide_on_biochem_path = event.currentTarget.checked;
-                    updateEdgesWidth(value);
+                    updateEdges(value);
                     break;
                 case "biochem_path":
                     config.bioPath.biochem_path = event.currentTarget.checked;
-                    var hideSel = $("#hide_graph_label");  //hahahahahahaha
-                    var hideSem = $("#dashed_lines_label");
-                    hideSel.attr("value", config.bioPath.biochem_path);
+
+                    //hideSel.attr("value", config.bioPath.biochem_path);
                     if (config.bioPath.biochem_path) {
-                        hideSel.show();
-                        hideSem.show();
+                        $("#bioChemAddOptions").show();
                     } else {
                         config.bioPath.hide_on_biochem_path = false;
+                        config.bioPath.dashed_lines = false;
                         $("#hide_graph_id").prop("checked", false);
                         $("#dashed_lines_id").prop("checked", false);
-                        hideSel.hide();
-                        hideSem.hide();
+                        $("#bioChemAddOptions").hide();
                     }
-                    updateEdgesWidth(value);
+                    updateEdges(value);
                     break;
                 case "structures":
                     config.structures = event.currentTarget.checked;
@@ -864,23 +842,22 @@ $(function () {
             });
         });
 
-        $.fn.waitUntilExists = function (handler, shouldRunHandlerOnce, isChild) {
-            var found = 'found';
-            var $this = $(this.selector);
-            var $elements = $this.not(function () {
-                return $(this).data(found);
-            }).each(handler).data(found, true);
-            if (!isChild) {
-                (window.waitUntilExists_Intervals = window.waitUntilExists_Intervals || {})[this.selector] =
-                    window.setInterval(function () {
-                        $this.waitUntilExists(handler, shouldRunHandlerOnce, true);
-                    }, 500)
-                ;
+        function fixGraph() {
+            if (fix) {
+                networkOptions.physics = gPhysics;
+            } else {
+                networkOptions.physics = {
+                    barnesHut: {
+                        gravitationalConstant: 0,
+                        centralGravity: 0,
+                        springConstant: 0
+                    },
+                    stabilization: {
+                        enabled: false
+                    }
+                };
             }
-            else if (shouldRunHandlerOnce && $elements.length) {
-                window.clearInterval(window.waitUntilExists_Intervals[this.selector]);
-            }
-            return $this;
+            network.setOptions(networkOptions);
         }
 
         function decimalAdjust(type, value, exp) {

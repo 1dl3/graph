@@ -52,18 +52,6 @@
         </div>
 
         <div class="sidebar-item">
-            <h4>Animation:</h4>
-
-            <label for=speed_slider>Animation Speed</label>
-            <input type="range" class="pControl" id="speed_slider" value="2000" min="100" max="5000" step="500"
-                   style="margin-right: 18px" name="Speed">
-            <a class="btn btn-default" href="#" id="animatGraph" value="Start"> <i class="fa fa-play"
-                                                                                   id="playButton"></i></a>
-            <a class="btn btn-default" href="#" id="stopAnimation" value="Stop"> <i class="fa fa-stop"
-                                                                                    id="stopButton"></i></a>
-        </div>
-
-        <div class="sidebar-item">
             <h4>Dataset:</h4>
 
             <div class="btn-group">
@@ -98,18 +86,17 @@
                 <ul>
                     <li><label><input type="checkbox" value="biochem_path" id="biochem_path_id"/>Display
                         Biochem.Pathways </label>
-                        <ul>
-                            <li><label id="hide_graph_label" style="display: none"><input type="checkbox"
-                                                                                          id="hide_graph_id"
-                                                                                          value="hide_graph">Hide Graph</label>
+                        <ul id="bioChemAddOptions" style="display: none">
+                            <li><label id="hide_graph_label"><input type="checkbox" id="hide_graph_id" value="hide_graph">Hide Graph</label>
                             </li>
-                            <li><label id="dashed_lines_label" style="display: none"><input type="checkbox"
-                                                                                            id="dashed_lines_id"
-                                                                                            value="dashed_lines">Dashed
+                            <li><label id="dashed_lines_label"><input type="checkbox"
+                                                                      id="dashed_lines_id"
+                                                                      value="dashed_lines">Dashed
                                 Lines</label>
                             </li>
                         </ul>
                     </li>
+
                     <li><label><input type="checkbox" id="structure_checkbox" value="structures"/>Display
                         structures</label></li>
                     <li><label><input type="checkbox" id="convex_hulls_id" value="convex_hulls" checked="checked"/>Displayconvex
@@ -117,7 +104,14 @@
                 </ul>
             </div>
         </div>
+        <div class="sidebar-item">
+            <h4>Animation:</h4>
 
+            <label for=speed_slider>Animation Speed</label>
+            <input type="range" class="pControl" id="speed_slider" value="500" min="0" max="3500" step="10" style="margin-right: 18px" name="Speed">
+            <a class="btn btn-default" href="#" id="animatGraph" value="Start"> <i class="fa fa-play" id="playButton"></i></a>
+            <a class="btn btn-default" href="#" id="stopAnimation" value="Stop"> <i class="fa fa-stop" id="stopButton"></i></a>
+        </div>
         <div class="sidebar-item">
             <h4>Connections</h4>
             <h5 id="el_connnections">Connections:</h5>
@@ -183,7 +177,7 @@
                            value="0"/>
 
                     <label for=springConstant>Spring Constant</label>
-                    <input class="pControl" id="springConstant" type="range" min="0" max="1.2" step="0.005" value="0"/>
+                    <input class="pControl" id="springConstant" type="range" min="0" max="1" step="0.05" value="0"/>
 
                     <label for=damping>Damping</label>
                     <input type="range" class="pControl" id="damping" min="0" max="1" step="0.01">
