@@ -568,7 +568,6 @@ $(function () {
             return color;
         }
 
-
         function updateNodes(sValue) {
             var index = sliderValues.indexOf(sValue);
             var node;
