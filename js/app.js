@@ -663,7 +663,7 @@ $(function () {
 
         var animating = false;
         var i = 0;
-        var speed = document.getElementById("speed_slider").value;
+        var speed = 0.80; //document.getElementById("speed_slider").value;
 
         $("#speed_slider").on("input change", function (event) {
             speed = event.currentTarget.value;
