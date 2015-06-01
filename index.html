@@ -47,7 +47,7 @@
             <a class="btn btn-default" href="#" id="step_left"> <i class="fa fa-arrow-left"></i></a>
             <a class="btn btn-default" href="#" id="step_rigth"> <i class="fa fa-arrow-right"></i></a>
 
-            <label><input type="checkbox" id="fixLength"/>Fix Length</label>
+            <label><input type="checkbox" id="fixLength" value="fix_length"/>Fix Length</label>
 
         </div>
 
@@ -86,15 +86,16 @@
                 <ul>
                     <li><label><input type="checkbox" value="biochem_path" id="biochem_path_id"/>Display
                         Biochem.Pathways </label>
-                        <ul id="bioChemAddOptions" style="display: none">
-                            <li><label id="hide_graph_label"><input type="checkbox" id="hide_graph_id" value="hide_graph">Hide Graph</label>
+                        <ol id="bioChemAddOptions" style="display: none">
+                            <li><label id="hide_graph_label"><input type="checkbox" id="hide_graph_id"
+                                                                    value="hide_graph">Hide Graph</label>
                             </li>
                             <li><label id="dashed_lines_label"><input type="checkbox"
                                                                       id="dashed_lines_id"
                                                                       value="dashed_lines">Dashed
                                 Lines</label>
                             </li>
-                        </ul>
+                        </ol>
                     </li>
 
                     <li><label><input type="checkbox" id="structure_checkbox" value="structures"/>Display
@@ -108,9 +109,12 @@
             <h4>Animation:</h4>
 
             <label for=speed_slider>Animation Speed</label>
-            <input type="range" class="pControl" id="speed_slider" value="500" min="0" max="3500" step="10" style="margin-right: 18px" name="Speed">
-            <a class="btn btn-default" href="#" id="animatGraph" value="Start"> <i class="fa fa-play" id="playButton"></i></a>
-            <a class="btn btn-default" href="#" id="stopAnimation" value="Stop"> <i class="fa fa-stop" id="stopButton"></i></a>
+            <input type="range" class="pControl" id="speed_slider" value="500" min="0" max="3500" step="10"
+                   style="margin-right: 18px" name="Speed">
+            <a class="btn btn-default" href="#" id="animatGraph" value="Start"> <i class="fa fa-play"
+                                                                                   id="playButton"></i></a>
+            <a class="btn btn-default" href="#" id="stopAnimation" value="Stop"> <i class="fa fa-stop"
+                                                                                    id="stopButton"></i></a>
         </div>
         <div class="sidebar-item">
             <h4>Connections</h4>
@@ -124,6 +128,7 @@
     </div>
 
     <div class="col-md-7" id="cy">
+        <noscript id="noScript">We're sorry but our site <i>requires</i> JavaScript.</noscript>
     </div>
 
     <div class="col-md-3">

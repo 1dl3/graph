@@ -1,3 +1,12 @@
+/*
+ goal update in O(n) (currently ):
+
+ what needs updating:
+ - edges according to value
+ - datatable (save edge ids in datatable ?)
+ - lable
+ - connections (if possible)
+ */
 $(function () {
         var dataTable = $('#data-table').DataTable();
         var elementHeading = $("#el_connnections");
@@ -86,7 +95,8 @@ $(function () {
                 }
             },
             nodes: {
-                color: "#97C2FC"
+                color: "#97C2FC",
+                size: 45
             },
             layout: {
                 randomSeed: 1
@@ -339,7 +349,7 @@ $(function () {
                 if (config.structures) {
                     data.shape = "circularImage";
                     data.image = "mol_icons/" + data.id.toLowerCase() + ".png";
-                    data.size = 25;
+                    data.size = 45;
                     data.title = "<img src='mol_icons/" + data.id.toLowerCase() + ".png'  style='height:123px;width:100px'>";
                 }
                 networkData.nodes.add(data);
@@ -558,6 +568,7 @@ $(function () {
             return color;
         }
 
+
         function updateNodes(sValue) {
             var index = sliderValues.indexOf(sValue);
             var node;
@@ -575,7 +586,7 @@ $(function () {
                     node.title = "<img src='mol_icons/" + node.id.toLowerCase() + ".png'  style='height:100px;width:100px'>";
                     node.size = 30;
                 } else {
-                    node.size = 35;
+                    node.size = 45;
                     node.shape = "ellipse";
                 }
 
@@ -633,7 +644,9 @@ $(function () {
             if (!fileDiff) {
                 edge.width = (value * edgeWidthScaleFactor) + 3;
                 if (!fixLength) {
-                    edge.length = (Math.pow(Math.abs(value) * edgeLengthScaleFactor, 2) * -1) + 75;
+                    edge.length = (Math.pow(Math.abs(value) * edgeLengthScaleFactor, 2)) + 100;
+                } else {
+                    edge.length = 175;
                 }
             }
 
@@ -746,7 +759,6 @@ $(function () {
                 case "biochem_path":
                     config.bioPath.biochem_path = event.currentTarget.checked;
 
-                    //hideSel.attr("value", config.bioPath.biochem_path);
                     if (config.bioPath.biochem_path) {
                         $("#bioChemAddOptions").show();
                     } else {
@@ -761,6 +773,11 @@ $(function () {
                 case "structures":
                     config.structures = event.currentTarget.checked;
                     updateNodes(value);
+                    break;
+                case "fix_length":
+                    config.fixLength = event.currentTarget.checked;
+                    updateEdges(value);
+                    network.stabilize();
                     break;
                 case "convex_hulls":
                     config.groups = event.currentTarget.checked;
@@ -779,6 +796,7 @@ $(function () {
         $("#stabilize").on('click', function (event) {
             network.stabilize();
         });
+
         $("#reset").on('click', function (event) {
             var file = config.currentFile;
             destroy();
@@ -841,24 +859,6 @@ $(function () {
                 }
             });
         });
-
-        function fixGraph() {
-            if (fix) {
-                networkOptions.physics = gPhysics;
-            } else {
-                networkOptions.physics = {
-                    barnesHut: {
-                        gravitationalConstant: 0,
-                        centralGravity: 0,
-                        springConstant: 0
-                    },
-                    stabilization: {
-                        enabled: false
-                    }
-                };
-            }
-            network.setOptions(networkOptions);
-        }
 
         function decimalAdjust(type, value, exp) {
             if (typeof exp === 'undefined' || +exp === 0) {
