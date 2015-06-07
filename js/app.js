@@ -1,12 +1,3 @@
-/*
- goal update in O(n) (currently ):
-
- what needs updating:
- - edges according to value
- - datatable (save edge ids in datatable ?)
- - lable
- - connections (if possible)
- */
 $(function () {
         var dataTable = $('#data-table').DataTable();
         var elementHeading = $("#el_connnections");
@@ -71,7 +62,7 @@ $(function () {
                     centralGravity: 1,
                     gravitationalConstant: -25714,
                     springConstant: 0.01,
-                    springLength: 200
+                    springLength: 120
                 }
             },
             edges: {
@@ -207,13 +198,11 @@ $(function () {
             } else {
                 elementHeading.html("Node: " + data.nodes[0]);
                 data = networkData.edges.get(data.edges);
-                data = sortSelection(val, data);
-
                 for (var key in data) {
                     if (!data[key].hidden) {
                         var conNodes = network.getConnectedNodes(data[key].id);
                         try {
-                            str += "<li><div class='connContainer'><b>" + conNodes[0] + "->" + conNodes[1] + "<div id='conListValue'  style='display:inline;'>:</b> " + data[key].rates[val] + "</div></div> </div></li>";
+                            str += "<li><div class=\"connContainer\"><b><div style='display:inline;' id=\"connContainer_" + conNodes[0] + conNodes[1] + "\">" + conNodes[0] + "->" + conNodes[1] + "</div><div id=\"conListValue_" + conNodes[0] + conNodes[1] + "\" style='display:inline;'>: " + data[key].rates[val] + "</div></div> </div></li>";
                         } catch (e) {
                             //biochem path -> no values
                         }
@@ -221,6 +210,37 @@ $(function () {
                 }
             }
             elementList.html(str);
+        }
+
+        function eUpdateConnections(index, sliderVal, data) {
+            if ((!data.nodes || !data.edges) || (data.nodes.length == 0 && data.edges.length == 0)) {
+                return;
+            }
+            var conNodes;
+            var str = "";
+            var connectedNodes = network.getConnectedNodes(data.edges);
+            if (data.nodes.length == 0) {
+                connectedNodes = networkData.edges.get(network.getSelectedEdges())[0];
+                document.getElementById("conListIndex").innerHTML = index;
+                document.getElementById("conListValue").innerHTML = connectedNodes.rates[sliderVal];
+            } else {
+                data = networkData.edges.get(data.edges);
+                data = sortSelection(sliderVal, data);
+                for (var key in data) {
+                    if (!data[key].hidden) {
+                        try {
+                            conNodes = network.getConnectedNodes(data[key].id);
+                            str += "<li><div class=\"connContainer\"><b><div style='display:inline;' id=\"connContainer_" + conNodes[0] + conNodes[1] + "\">" + conNodes[0] + "->" + conNodes[1] + "</div><div id=\"conListValue_" + conNodes[0] + conNodes[1] + "\" style='display:inline;'>: " + data[key].rates[sliderVal] + "</div></div> </div></li>";
+                        } catch (e) {
+                            //console.log(e);
+                            //biochem path -> no values
+                        }
+                    }
+                }
+                elementList.html(str);
+
+            }
+
         }
 
         function attachNetworkListeners() {
@@ -643,7 +663,7 @@ $(function () {
             if (!fileDiff) {
                 edge.width = (value * edgeWidthScaleFactor) + 3;
                 if (!fixLength) {
-                    edge.length = (Math.pow(Math.abs(value) * edgeLengthScaleFactor, 2)) + 100;
+                    edge.length = (Math.pow(Math.abs(value) * edgeLengthScaleFactor, 2)) + 50;
                 } else {
                     edge.length = 175;
                 }
@@ -663,7 +683,7 @@ $(function () {
 
         var animating = false;
         var i = 0;
-        var speed = 0.80; //document.getElementById("speed_slider").value;
+        var speed = document.getElementById("speed_slider").value;
 
         $("#speed_slider").on("input change", function (event) {
             speed = event.currentTarget.value;
@@ -687,13 +707,12 @@ $(function () {
             $("#playButton").switchClass("fa-pause", "fa-play");
             animating = false;
             i = 0;
-            setConnectionsList(network.getSelection());
         }
 
         function animation() {
             setTimeout(function () {
                 updateUI(sliderValues[i]);
-                $("#phSlider").attr("value", sliderValues[i]);
+                eUpdateConnections(sliderValues[i], i, network.getSelection());
                 i++;
                 if (i < sliderValues.length && animating) {
                     animation();
@@ -726,7 +745,7 @@ $(function () {
                                 centralGravity: 1,
                                 gravitationalConstant: -25714,
                                 springConstant: 0.01,
-                                springLength: 150
+                                springLength: 100
                             }
                         }
                     }
