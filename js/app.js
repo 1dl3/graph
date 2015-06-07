@@ -16,6 +16,7 @@ $(function () {
             absolut_file: false,
             structures: false,
             fixLength: false,
+            scaling: false,
             bioPath: {
                 biochem_path: false,
                 hide_on_biochem_path: false,
@@ -150,7 +151,7 @@ $(function () {
             if (dataTable != null) {
                 dataTable.clear();
             }
-            config.reset();
+            //config.reset();
             setConfig();
         }
 
@@ -303,7 +304,7 @@ $(function () {
         }
 
         function buildGraph(elements) {
-            var fixLength = document.getElementById("fixLength").checked;
+            var fixLength = config.fixLength;
             var fileDiff = config.fileType == "diff";
 
             var tmp = [];
@@ -500,7 +501,8 @@ $(function () {
 
         function loadExperiment(biochems, filename) {
             filename = config.currentFile = filename.toLowerCase();
-            var scaling = document.getElementById("disable_reaction").checked;
+            readConfig();
+            var scaling = config.scaling;
             if (scaling) {
                 filename = "abs_" + filename;
                 config.absolut_file = true;
@@ -519,10 +521,6 @@ $(function () {
                 if (filename.indexOf("ad") >= 0) {
                     config.fileType = "ad";
                 }
-
-                config.bioPath.biochem_path = document.getElementById("biochem_path_id").checked;
-                config.structures = document.getElementById("structure_checkbox").checked;
-                config.groups = document.getElementById("convex_hulls_id").checked;
                 $("#graphTables").tabs("option", "active", 0);
                 var loadedRates = processData(data);
                 var merged = biochems.concat(loadedRates);
@@ -531,6 +529,7 @@ $(function () {
                 createDatatable();
                 //holy inefficiency
                 updateNodes("3");
+                updateEdges("3");
                 updateListStyle(config.groups);
             });
         }
@@ -539,10 +538,12 @@ $(function () {
             config = {
                 structures: document.getElementById("structure_checkbox").checked,
                 fixLength: document.getElementById("fixLength").checked,
+                scaling: document.getElementById("disable_reaction").checked,
+
                 bioPath: {
                     biochem_path: document.getElementById("biochem_path_id").checked,
-                    hide_on_biochem_path: false,
-                    dashed_lines: false
+                    hide_on_biochem_path: (document.getElementById("biochem_path_id").checked ? document.getElementById("hide_graph_id").checked : false),
+                    dashed_lines: (document.getElementById("biochem_path_id").checked ? document.getElementById("dashed_lines_id").checked : false)
                 },
                 groups: document.getElementById("convex_hulls_id").checked
             };
@@ -553,9 +554,14 @@ $(function () {
             document.getElementById("structure_checkbox").checked = config.structures;
             document.getElementById("fixLength").checked = config.fixLength;
             document.getElementById("biochem_path_id").checked = config.bioPath.biochem_path;
-            document.getElementById("hide_graph_id").checked = config.bioPath.biochem_path;
-            document.getElementById("dashed_lines_id").checked = config.bioPath.biochem_path;
-            $("#bioChemAddOptions").hide();
+            document.getElementById("hide_graph_id").checked = config.bioPath.hide_on_biochem_path;
+            document.getElementById("dashed_lines_id").checked = config.bioPath.dashed_lines;
+
+            if (config.bioPath.biochem_path) {
+                $("#bioChemAddOptions").show();
+            } else {
+                $("#bioChemAddOptions").hide();
+            }
         }
 
         function loadExperimentFile(filename) {
@@ -623,7 +629,7 @@ $(function () {
             var index = sliderValues.indexOf(sValue);
             var i = 0;
             var value;
-            var fixLength = document.getElementById("fixLength").checked;
+            var fixLength = config.fixLength;
             var chemScaling = config.bioPath.biochem_path;
             var fileDiff = config.fileType == "diff";
             if (index >= 0) {
@@ -663,7 +669,7 @@ $(function () {
             if (!fileDiff) {
                 edge.width = (value * edgeWidthScaleFactor) + 3;
                 if (!fixLength) {
-                    edge.length = (Math.pow(Math.abs(value) * edgeLengthScaleFactor, 2)) + 50;
+                    edge.length = (Math.pow(Math.abs(value) * edgeLengthScaleFactor, 2) * -1) + 75;
                 } else {
                     edge.length = 175;
                 }
