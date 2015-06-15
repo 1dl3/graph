@@ -288,7 +288,7 @@ $(function () {
                 var name = node[0] + node[1];
                 var rates = entries.splice(1, entries.length);
                 for (var i = 0; i < rates.length; i++) {
-                    rates[i] = Math.round10(rates[i], -3);
+                    rates[i] = toFixedDown(parseFloat(rates[i]), 5);
                 }
 
                 nodes.push({
@@ -884,25 +884,14 @@ $(function () {
             });
         });
 
-        function decimalAdjust(type, value, exp) {
-            if (typeof exp === 'undefined' || +exp === 0) {
-                return Math[type](value);
-            }
-            value = +value;
-            exp = +exp;
-            if (isNaN(value) || !(typeof exp === 'number' && exp % 1 === 0)) {
-                return NaN;
-            }
-            value = value.toString().split('e');
-            value = Math[type](+(value[0] + 'e' + (value[1] ? (+value[1] - exp) : -exp)));
-            value = value.toString().split('e');
-            return +(value[0] + 'e' + (value[1] ? (+value[1] + exp) : exp));
-        }
+        function toFixedDown(num, digits) {
+            var numS = num.toString(),
+                decPos = numS.indexOf('.'),
+                substrLength = decPos == -1 ? numS.length : 1 + decPos + digits,
+                trimmedResult = numS.substr(0, substrLength),
+                finalResult = isNaN(trimmedResult) ? 0 : trimmedResult;
 
-        if (!Math.round10) {
-            Math.round10 = function (value, exp) {
-                return decimalAdjust('round', value, exp);
-            };
+            return parseFloat(finalResult);
         }
     }
 )
